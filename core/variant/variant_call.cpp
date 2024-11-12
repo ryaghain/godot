@@ -657,23 +657,7 @@ static _FORCE_INLINE_ void vc_ptrcall(void (*method)(T *, P...), void *p_base, c
 		}                                                                                                                                                         \
 	};
 
-#define VARCALL_PACKED_GETTER(m_packed_type, m_return_type)                                       \
-	static m_return_type func_##m_packed_type##_get(m_packed_type *p_instance, int64_t p_index) { \
-		return p_instance->get(p_index);                                                          \
-	}
-
 struct _VariantCall {
-	VARCALL_PACKED_GETTER(PackedByteArray, uint8_t)
-	VARCALL_PACKED_GETTER(PackedColorArray, Color)
-	VARCALL_PACKED_GETTER(PackedFloat32Array, float)
-	VARCALL_PACKED_GETTER(PackedFloat64Array, double)
-	VARCALL_PACKED_GETTER(PackedInt32Array, int32_t)
-	VARCALL_PACKED_GETTER(PackedInt64Array, int64_t)
-	VARCALL_PACKED_GETTER(PackedStringArray, String)
-	VARCALL_PACKED_GETTER(PackedVector2Array, Vector2)
-	VARCALL_PACKED_GETTER(PackedVector3Array, Vector3)
-	VARCALL_PACKED_GETTER(PackedVector4Array, Vector4)
-
 	static String func_PackedByteArray_get_string_from_ascii(PackedByteArray *p_instance) {
 		String s;
 		if (p_instance->size() > 0) {
@@ -945,6 +929,29 @@ struct _VariantCall {
 		ERR_FAIL_COND_V(dest.is_empty(), dest); // Avoid UB in case resize failed.
 		memcpy(dest.ptrw(), r, dest.size() * sizeof(double));
 		return dest;
+	}
+
+		static PackedVector3Array func_PackedByteArray_decompress_vector3_array(PackedByteArray *p_instance) {
+		uint64_t size = p_instance->size();
+		PackedVector3Array destination;
+		if (size == 0) {
+			return destination;
+		}
+		ERR_FAIL_COND_V_MSG(size % 3, destination, "PackedByteArray size must be a multiple of 3 to convert to PackedVector3Array.");
+		const uint8_t *source = p_instance->ptr();
+		destination.resize(size / 3);
+		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		for (uint64_t i = 0; i < size; i = i + 3) {
+			Vector3 final_index;
+			uint8_t x = *(p_instance + i);
+			uint8_t y = p_instance[i + 1];
+			uint8_t z = p_instance[i + 2];
+			final_index.x = static_cast<real_t>(x);
+			final_index.y = static_cast<real_t>(y);
+			final_index.z = static_cast<real_t>(z);
+			destination[i] = final_index;
+		}
+		return destination;
 	}
 
 	static void func_PackedByteArray_encode_u8(PackedByteArray *p_instance, int64_t p_offset, int64_t p_value) {
@@ -1740,8 +1747,6 @@ static void _register_variant_builtin_methods_string() {
 	bind_string_method(validate_node_name, sarray(), varray());
 	bind_string_method(validate_filename, sarray(), varray());
 
-	bind_string_method(is_valid_ascii_identifier, sarray(), varray());
-	bind_string_method(is_valid_unicode_identifier, sarray(), varray());
 	bind_string_method(is_valid_identifier, sarray(), varray());
 	bind_string_method(is_valid_int, sarray(), varray());
 	bind_string_method(is_valid_float, sarray(), varray());
@@ -1867,7 +1872,6 @@ static void _register_variant_builtin_methods_math() {
 	bind_method(Rect2, intersection, sarray("b"), varray());
 	bind_method(Rect2, merge, sarray("b"), varray());
 	bind_method(Rect2, expand, sarray("to"), varray());
-	bind_method(Rect2, get_support, sarray("direction"), varray());
 	bind_method(Rect2, grow, sarray("amount"), varray());
 	bind_methodv(Rect2, grow_side, &Rect2::grow_side_bind, sarray("side", "amount"), varray());
 	bind_method(Rect2, grow_individual, sarray("left", "top", "right", "bottom"), varray());
@@ -2116,7 +2120,6 @@ static void _register_variant_builtin_methods_misc() {
 	bind_function(Callable, get_argument_count, _VariantCall::func_Callable_get_argument_count, sarray(), varray());
 	bind_method(Callable, get_bound_arguments_count, sarray(), varray());
 	bind_method(Callable, get_bound_arguments, sarray(), varray());
-	bind_method(Callable, get_unbound_arguments_count, sarray(), varray());
 	bind_method(Callable, hash, sarray(), varray());
 	bind_method(Callable, bindv, sarray("arguments"), varray());
 	bind_method(Callable, unbind, sarray("argcount"), varray());
@@ -2138,7 +2141,6 @@ static void _register_variant_builtin_methods_misc() {
 	bind_method(Signal, disconnect, sarray("callable"), varray());
 	bind_method(Signal, is_connected, sarray("callable"), varray());
 	bind_method(Signal, get_connections, sarray(), varray());
-	bind_method(Signal, has_connections, sarray(), varray());
 
 	bind_custom(Signal, emit, _VariantCall::func_Signal_emit, false, Variant);
 
@@ -2206,7 +2208,7 @@ static void _register_variant_builtin_methods_misc() {
 	bind_method(AABB, merge, sarray("with"), varray());
 	bind_method(AABB, expand, sarray("to_point"), varray());
 	bind_method(AABB, grow, sarray("by"), varray());
-	bind_method(AABB, get_support, sarray("direction"), varray());
+	bind_method(AABB, get_support, sarray("dir"), varray());
 	bind_method(AABB, get_longest_axis, sarray(), varray());
 	bind_method(AABB, get_longest_axis_index, sarray(), varray());
 	bind_method(AABB, get_longest_axis_size, sarray(), varray());
@@ -2272,8 +2274,6 @@ static void _register_variant_builtin_methods_misc() {
 	bind_method(Dictionary, size, sarray(), varray());
 	bind_method(Dictionary, is_empty, sarray(), varray());
 	bind_method(Dictionary, clear, sarray(), varray());
-	bind_method(Dictionary, assign, sarray("dictionary"), varray());
-	bind_method(Dictionary, sort, sarray(), varray());
 	bind_method(Dictionary, merge, sarray("dictionary", "overwrite"), varray(false));
 	bind_method(Dictionary, merged, sarray("dictionary", "overwrite"), varray(false));
 	bind_method(Dictionary, has, sarray("key"), varray());
@@ -2286,19 +2286,6 @@ static void _register_variant_builtin_methods_misc() {
 	bind_method(Dictionary, duplicate, sarray("deep"), varray(false));
 	bind_method(Dictionary, get, sarray("key", "default"), varray(Variant()));
 	bind_method(Dictionary, get_or_add, sarray("key", "default"), varray(Variant()));
-	bind_method(Dictionary, set, sarray("key", "value"), varray());
-	bind_method(Dictionary, is_typed, sarray(), varray());
-	bind_method(Dictionary, is_typed_key, sarray(), varray());
-	bind_method(Dictionary, is_typed_value, sarray(), varray());
-	bind_method(Dictionary, is_same_typed, sarray("dictionary"), varray());
-	bind_method(Dictionary, is_same_typed_key, sarray("dictionary"), varray());
-	bind_method(Dictionary, is_same_typed_value, sarray("dictionary"), varray());
-	bind_method(Dictionary, get_typed_key_builtin, sarray(), varray());
-	bind_method(Dictionary, get_typed_value_builtin, sarray(), varray());
-	bind_method(Dictionary, get_typed_key_class_name, sarray(), varray());
-	bind_method(Dictionary, get_typed_value_class_name, sarray(), varray());
-	bind_method(Dictionary, get_typed_key_script, sarray(), varray());
-	bind_method(Dictionary, get_typed_value_script, sarray(), varray());
 	bind_method(Dictionary, make_read_only, sarray(), varray());
 	bind_method(Dictionary, is_read_only, sarray(), varray());
 	bind_method(Dictionary, recursive_equal, sarray("dictionary", "recursion_count"), varray());
@@ -2312,8 +2299,6 @@ static void _register_variant_builtin_methods_array() {
 	bind_method(Array, clear, sarray(), varray());
 	bind_method(Array, hash, sarray(), varray());
 	bind_method(Array, assign, sarray("array"), varray());
-	bind_method(Array, get, sarray("index"), varray());
-	bind_method(Array, set, sarray("index", "value"), varray());
 	bind_method(Array, push_back, sarray("value"), varray());
 	bind_method(Array, push_front, sarray("value"), varray());
 	bind_method(Array, append, sarray("value"), varray());
@@ -2327,9 +2312,7 @@ static void _register_variant_builtin_methods_array() {
 	bind_method(Array, back, sarray(), varray());
 	bind_method(Array, pick_random, sarray(), varray());
 	bind_method(Array, find, sarray("what", "from"), varray(0));
-	bind_method(Array, find_custom, sarray("method", "from"), varray(0));
 	bind_method(Array, rfind, sarray("what", "from"), varray(-1));
-	bind_method(Array, rfind_custom, sarray("method", "from"), varray(-1));
 	bind_method(Array, count, sarray("value"), varray());
 	bind_method(Array, has, sarray("value"), varray());
 	bind_method(Array, pop_back, sarray(), varray());
@@ -2357,18 +2340,6 @@ static void _register_variant_builtin_methods_array() {
 	bind_method(Array, get_typed_script, sarray(), varray());
 	bind_method(Array, make_read_only, sarray(), varray());
 	bind_method(Array, is_read_only, sarray(), varray());
-
-	/* Packed*Array get (see VARCALL_PACKED_GETTER macro) */
-	bind_function(PackedByteArray, get, _VariantCall::func_PackedByteArray_get, sarray("index"), varray());
-	bind_function(PackedColorArray, get, _VariantCall::func_PackedColorArray_get, sarray("index"), varray());
-	bind_function(PackedFloat32Array, get, _VariantCall::func_PackedFloat32Array_get, sarray("index"), varray());
-	bind_function(PackedFloat64Array, get, _VariantCall::func_PackedFloat64Array_get, sarray("index"), varray());
-	bind_function(PackedInt32Array, get, _VariantCall::func_PackedInt32Array_get, sarray("index"), varray());
-	bind_function(PackedInt64Array, get, _VariantCall::func_PackedInt64Array_get, sarray("index"), varray());
-	bind_function(PackedStringArray, get, _VariantCall::func_PackedStringArray_get, sarray("index"), varray());
-	bind_function(PackedVector2Array, get, _VariantCall::func_PackedVector2Array_get, sarray("index"), varray());
-	bind_function(PackedVector3Array, get, _VariantCall::func_PackedVector3Array_get, sarray("index"), varray());
-	bind_function(PackedVector4Array, get, _VariantCall::func_PackedVector4Array_get, sarray("index"), varray());
 
 	/* Byte Array */
 	bind_method(PackedByteArray, size, sarray(), varray());
@@ -2421,6 +2392,7 @@ static void _register_variant_builtin_methods_array() {
 	bind_function(PackedByteArray, to_int64_array, _VariantCall::func_PackedByteArray_decode_s64_array, sarray(), varray());
 	bind_function(PackedByteArray, to_float32_array, _VariantCall::func_PackedByteArray_decode_float_array, sarray(), varray());
 	bind_function(PackedByteArray, to_float64_array, _VariantCall::func_PackedByteArray_decode_double_array, sarray(), varray());
+	bind_function(PackedByteArray, decompress_vec3_array, _VariantCall::func_PackedByteArray_decompress_vector3_array, sarray(), varray())
 
 	bind_functionnc(PackedByteArray, encode_u8, _VariantCall::func_PackedByteArray_encode_u8, sarray("byte_offset", "value"), varray());
 	bind_functionnc(PackedByteArray, encode_s8, _VariantCall::func_PackedByteArray_encode_s8, sarray("byte_offset", "value"), varray());
