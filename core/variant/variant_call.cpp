@@ -931,6 +931,29 @@ struct _VariantCall {
 		return dest;
 	}
 
+		static PackedVector3Array func_PackedByteArray_decompress_vector3_array(PackedByteArray *p_instance) {
+		uint64_t size = p_instance->size();
+		PackedVector3Array destination;
+		if (size == 0) {
+			return destination;
+		}
+		ERR_FAIL_COND_V_MSG(size % 3, destination, "PackedByteArray size must be a multiple of 3 to convert to PackedVector3Array.");
+		const uint8_t *source = p_instance->ptr();
+		destination.resize(size / 3);
+		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		for (uint64_t i = 0; i < size; i = i + 3) {
+			Vector3 final_index;
+			uint8_t x = *(p_instance + i);
+			uint8_t y = p_instance[i + 1];
+			uint8_t z = p_instance[i + 2];
+			final_index.x = static_cast<real_t>(x);
+			final_index.y = static_cast<real_t>(y);
+			final_index.z = static_cast<real_t>(z);
+			destination[i] = final_index;
+		}
+		return destination;
+	}
+
 	static void func_PackedByteArray_encode_u8(PackedByteArray *p_instance, int64_t p_offset, int64_t p_value) {
 		uint64_t size = p_instance->size();
 		ERR_FAIL_COND(p_offset < 0 || p_offset > int64_t(size) - 1);
@@ -2369,6 +2392,7 @@ static void _register_variant_builtin_methods_array() {
 	bind_function(PackedByteArray, to_int64_array, _VariantCall::func_PackedByteArray_decode_s64_array, sarray(), varray());
 	bind_function(PackedByteArray, to_float32_array, _VariantCall::func_PackedByteArray_decode_float_array, sarray(), varray());
 	bind_function(PackedByteArray, to_float64_array, _VariantCall::func_PackedByteArray_decode_double_array, sarray(), varray());
+	bind_function(PackedByteArray, decompress_vec3_array, _VariantCall::func_PackedByteArray_decompress_vector3_array, sarray(), varray())
 
 	bind_functionnc(PackedByteArray, encode_u8, _VariantCall::func_PackedByteArray_encode_u8, sarray("byte_offset", "value"), varray());
 	bind_functionnc(PackedByteArray, encode_s8, _VariantCall::func_PackedByteArray_encode_s8, sarray("byte_offset", "value"), varray());
