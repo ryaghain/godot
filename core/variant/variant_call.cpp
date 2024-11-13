@@ -941,15 +941,14 @@ struct _VariantCall {
 		const uint8_t *source = p_instance->ptr();
 		destination.resize(size / 3);
 		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		uint64_t destination_index = 0;
 		for (uint64_t i = 0; i < size; i = i + 3) {
-			Vector3 final_index;
-			uint8_t x = *(p_instance + i);
-			uint8_t y = p_instance[i + 1];
-			uint8_t z = p_instance[i + 2];
-			final_index.x = static_cast<real_t>(x);
-			final_index.y = static_cast<real_t>(y);
-			final_index.z = static_cast<real_t>(z);
-			destination[i] = final_index;
+			Vector3 value;
+			value.x = static_cast<real_t>(p_instance->get(i    ));
+			value.y = static_cast<real_t>(p_instance->get(i + 1));
+			value.z = static_cast<real_t>(p_instance->get(i + 2));
+			destination.set(destination_index, value);
+			destination_index++;
 		}
 		return destination;
 	}
