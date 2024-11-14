@@ -932,17 +932,17 @@ struct _VariantCall {
 	}
 
 	static PackedVector3Array func_PackedByteArray_custom_to_vertices(PackedByteArray *p_instance) {
-		uint64_t size = p_instance->size();
+		uint64_t source_size = p_instance->size();
 		PackedVector3Array destination;
-		if (size == 0) {
+		if (source_size == 0) {
 			return destination;
 		}
-		ERR_FAIL_COND_V_MSG(size % 3, destination, "PackedByteArray size must be a multiple of 3 to convert to vertices.");
+		ERR_FAIL_COND_V_MSG(source_size % 3, destination, "PackedByteArray size must be a multiple of 3 to convert to vertices.");
 		const uint8_t *source = p_instance->ptr();
-		destination.resize(size / 3);
+		destination.resize(source_size / 3);
 		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
 		uint64_t destination_index = 0;
-		for (uint64_t i = 0; i < size; i = i + 3) {
+		for (uint64_t i = 0; i < source_size; i = i + 3) {
 			Vector3 value = Vector3(static_cast<real_t>(p_instance->get(i)), static_cast<real_t>(p_instance->get(i + 1)), static_cast<real_t>(p_instance->get(i + 2)));
 			destination.set(destination_index, value);
 			destination_index++;
@@ -951,18 +951,38 @@ struct _VariantCall {
 	}
 
 	static PackedVector3Array func_PackedByteArray_custom_to_normals(PackedByteArray *p_instance) {
-		uint64_t size = p_instance->size();
+		uint64_t source_size = p_instance->size();
 		PackedVector3Array destination;
-		if (size == 0) {
+		if (source_size == 0) {
 			return destination;
 		}
 		const uint8_t *source = p_instance->ptr();
-		destination.resize(size * 6);
+		destination.resize(source_size * 6);
 		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
 		Vector3 normal_vectors[6] {Vector3(0,1,0), Vector3(0,-1,0), Vector3(-1,0,0), Vector3(1,0,0), Vector3(0,0,-1), Vector3(0,0,1)};
 		uint64_t destination_index = 0;
-		for (uint64_t i = 0; i < size; i++) {
+		for (uint64_t i = 0; i < source_size; i++) {
 			Vector3 value = normal_vectors[p_instance->get(i)];
+			for (uint8_t n = 0; n < 6; n++) {
+				destination.set(destination_index, value);
+				destination_index++;
+			}
+		}
+		return destination;
+	}
+
+	static PackedFloat32Array func_PackedByteArray_custom_to_ids(PackedByteArray *p_instance) {
+		uint64_t source_size = p_instance->size();
+		PackedFloat32Array destination;
+		if (source_size == 0) {
+			return destination;
+		}
+		const uint8_t *source = p_instance->ptr();
+		destination.resize(source_size * 6);
+		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		uint64_t destination_index = 0;
+		for (uint64_t i = 0; i < source_size; i++) {
+			double value = static_cast<double>(p_instance->get(i));
 			for (uint8_t n = 0; n < 6; n++) {
 				destination.set(destination_index, value);
 				destination_index++;
@@ -2411,6 +2431,7 @@ static void _register_variant_builtin_methods_array() {
 	bind_function(PackedByteArray, to_float64_array, _VariantCall::func_PackedByteArray_decode_double_array, sarray(), varray());
 	bind_function(PackedByteArray, custom_to_vertices, _VariantCall::func_PackedByteArray_custom_to_vertices, sarray(), varray());
 	bind_function(PackedByteArray, custom_to_normals, _VariantCall::func_PackedByteArray_custom_to_normals, sarray(), varray());
+	bind_function(PackedByteArray, custom_to_ids, _VariantCall::func_PackedByteArray_custom_to_ids, sarray(), varray());
 
 	bind_functionnc(PackedByteArray, encode_u8, _VariantCall::func_PackedByteArray_encode_u8, sarray("byte_offset", "value"), varray());
 	bind_functionnc(PackedByteArray, encode_s8, _VariantCall::func_PackedByteArray_encode_s8, sarray("byte_offset", "value"), varray());
