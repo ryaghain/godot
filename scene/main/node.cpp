@@ -45,6 +45,8 @@
 
 #include <stdint.h>
 
+std::mutex mutex_add_child;
+
 int Node::orphan_node_count = 0;
 
 thread_local Node *Node::current_process_thread_group = nullptr;
@@ -1559,6 +1561,57 @@ void Node::_add_child_nocheck(Node *p_child, const StringName &p_name, InternalM
 	emit_signal(SNAME("child_order_changed"));
 }
 
+void Node::_custom_add_child_nocheck_thread_safe(Node *p_child, const StringName &p_name, InternalMode p_internal_mode) {
+	//add a child node quickly, without name validation
+
+	p_child->data.name = p_name;
+	{
+		std::lock_guard lock{mutex_add_child};
+		data.children.insert(p_name, p_child);
+	}
+
+	p_child->data.internal_mode = p_internal_mode;
+	switch (p_internal_mode) {
+		case INTERNAL_MODE_FRONT: {
+			p_child->data.index = data.internal_children_front_count_cache++;
+		} break;
+		case INTERNAL_MODE_BACK: {
+			p_child->data.index = data.internal_children_back_count_cache++;
+		} break;
+		case INTERNAL_MODE_DISABLED: {
+			p_child->data.index = data.external_children_count_cache++;
+		} break;
+	}
+
+	p_child->data.parent = this;
+
+	if (!data.children_cache_dirty && p_internal_mode == INTERNAL_MODE_DISABLED && data.internal_children_back_count_cache == 0) {
+		// Special case, also add to the cached children array since its cheap.
+		{
+			std::lock_guard lock{mutex_add_child};
+			data.children_cache.push_back(p_child);
+		}
+	} else {
+		{
+			std::lock_guard lock{mutex_add_child};
+			data.children_cache_dirty = true;
+		}
+	}
+
+	p_child->notification(NOTIFICATION_PARENTED);
+
+	if (data.tree) {
+		p_child->_set_tree(data.tree);
+	}
+
+	/* Notify */
+	//recognize children created in this node constructor
+	p_child->data.parent_owned = data.in_constructor;
+	add_child_notify(p_child);
+	notification(NOTIFICATION_CHILD_ORDER_CHANGED);
+	emit_signal(SNAME("child_order_changed"));
+}
+
 void Node::add_child(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
 	ERR_FAIL_COND_MSG(data.inside_tree && !Thread::is_main_thread(), "Adding children to a node inside the SceneTree is only allowed from the main thread. Use call_deferred(\"add_child\",node).");
 
@@ -1581,6 +1634,27 @@ void Node::add_child(Node *p_child, bool p_force_readable_name, InternalMode p_i
 #endif // DEBUG_ENABLED
 
 	_add_child_nocheck(p_child, p_child->data.name, p_internal);
+}
+
+void Node::custom_add_child_thread_safe(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
+	ERR_FAIL_NULL(p_child);
+	ERR_FAIL_COND_MSG(p_child == this, vformat("Can't add child '%s' to itself.", p_child->get_name())); // adding to itself!
+	ERR_FAIL_COND_MSG(p_child->data.parent, vformat("Can't add child '%s' to '%s', already has a parent '%s'.", p_child->get_name(), get_name(), p_child->data.parent->get_name())); //Fail if node has a parent
+#ifdef DEBUG_ENABLED
+	ERR_FAIL_COND_MSG(p_child->is_ancestor_of(this), vformat("Can't add child '%s' to '%s' as it would result in a cyclic dependency since '%s' is already a parent of '%s'.", p_child->get_name(), get_name(), p_child->get_name(), get_name()));
+#endif
+	ERR_FAIL_COND_MSG(data.blocked > 0, "Parent node is busy setting up children, `add_child()` failed. Consider using `add_child.call_deferred(child)` instead.");
+
+	_validate_child_name(p_child, p_force_readable_name);
+
+#ifdef DEBUG_ENABLED
+	if (p_child->data.owner && !p_child->data.owner->is_ancestor_of(p_child)) {
+		// Owner of p_child should be ancestor of p_child.
+		WARN_PRINT(vformat("Adding '%s' as child to '%s' will make owner '%s' inconsistent. Consider unsetting the owner beforehand.", p_child->get_name(), get_name(), p_child->data.owner->get_name()));
+	}
+#endif // DEBUG_ENABLED
+
+	_custom_add_child_nocheck_thread_safe(p_child, p_child->data.name, p_internal);
 }
 
 void Node::add_sibling(Node *p_sibling, bool p_force_readable_name) {
@@ -3501,6 +3575,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_name", "name"), &Node::set_name);
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "force_readable_name", "internal"), &Node::add_child, DEFVAL(false), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("custom_add_child_thread_safe", "node", "force_readable_name", "internal"), &Node::custom_add_child_thread_safe, DEFVAL(false), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
 	ClassDB::bind_method(D_METHOD("reparent", "new_parent", "keep_global_transform"), &Node::reparent, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_child_count", "include_internal"), &Node::get_child_count, DEFVAL(false)); // Note that the default value bound for include_internal is false, while the method is declared with true. This is because internal nodes are irrelevant for GDSCript.
