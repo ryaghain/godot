@@ -542,6 +542,7 @@ public:
 	FocusMode get_focus_mode() const;
 	bool has_focus() const;
 	void grab_focus();
+	void grab_focus_no_signal();
 	void grab_click_focus();
 	void release_focus();
 

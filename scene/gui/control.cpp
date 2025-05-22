@@ -2031,6 +2031,18 @@ void Control::grab_focus() {
 	get_viewport()->_gui_control_grab_focus(this);
 }
 
+void Control::grab_focus_no_signal() {
+	ERR_MAIN_THREAD_GUARD;
+	ERR_FAIL_COND(!is_inside_tree());
+
+	if (data.focus_mode == FOCUS_NONE) {
+		WARN_PRINT("This control can't grab focus. Use set_focus_mode() to allow a control to get focus.");
+		return;
+	}
+
+	get_viewport()->_gui_control_grab_focus_no_signal(this);
+}
+
 void Control::grab_click_focus() {
 	ERR_MAIN_THREAD_GUARD;
 	ERR_FAIL_COND(!is_inside_tree());
@@ -3520,6 +3532,7 @@ void Control::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_focus_mode"), &Control::get_focus_mode);
 	ClassDB::bind_method(D_METHOD("has_focus"), &Control::has_focus);
 	ClassDB::bind_method(D_METHOD("grab_focus"), &Control::grab_focus);
+	ClassDB::bind_method(D_METHOD("grab_focus_no_signal"), &Control::grab_focus_no_signal);
 	ClassDB::bind_method(D_METHOD("release_focus"), &Control::release_focus);
 	ClassDB::bind_method(D_METHOD("find_prev_valid_focus"), &Control::find_prev_valid_focus);
 	ClassDB::bind_method(D_METHOD("find_next_valid_focus"), &Control::find_next_valid_focus);

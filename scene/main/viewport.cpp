@@ -2528,6 +2528,19 @@ void Viewport::_gui_control_grab_focus(Control *p_control) {
 	}
 }
 
+void Viewport::_gui_control_grab_focus_no_signal(Control *p_control) {
+	if (gui.key_focus && gui.key_focus == p_control) {
+		// No need for change.
+		return;
+	}
+	get_tree()->call_group("_viewports", "_gui_remove_focus_for_window", get_base_window());
+	if (p_control->is_inside_tree() && p_control->get_viewport() == this) {
+		gui.key_focus = p_control;
+		p_control->notification(Control::NOTIFICATION_FOCUS_ENTER);
+		p_control->queue_redraw();
+	}
+}
+
 void Viewport::_gui_accept_event() {
 	if (is_inside_tree()) {
 		set_input_as_handled();
