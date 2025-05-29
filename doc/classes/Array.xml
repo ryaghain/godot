@@ -336,10 +336,10 @@
 			</description>
 		</method>
 		<method name="erase">
-			<return type="void" />
+			<return type="bool" />
 			<param index="0" name="value" type="Variant" />
 			<description>
-				Finds and removes the first occurrence of [param value] from the array. If [param value] does not exist in the array, nothing happens. To remove an element by index, use [method remove_at] instead.
+				Finds and removes the first occurrence of [param value] from the array, then returns [code]true[/code]. If [param value] does not exist in the array, returns [code]false[/code]. To remove an element by index, use [method remove_at] instead.
 				[b]Note:[/b] This method shifts every element's index after the removed [param value] back, which may have a noticeable performance cost, especially on larger arrays.
 				[b]Note:[/b] Erasing elements while iterating over arrays is [b]not[/b] supported and will result in unpredictable behavior.
 			</description>

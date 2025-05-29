@@ -322,11 +322,11 @@ void Array::fill(const Variant &p_value) {
 	_p->array.fill(value);
 }
 
-void Array::erase(const Variant &p_value) {
-	ERR_FAIL_COND_MSG(_p->read_only, "Array is in read-only state.");
+bool Array::erase(const Variant &p_value) {
+	ERR_FAIL_COND_V_MSG(_p->read_only, false, "Array is in read-only state.");
 	Variant value = p_value;
-	ERR_FAIL_COND(!_p->typed.validate(value, "erase"));
-	_p->array.erase(value);
+	ERR_FAIL_COND_V(!_p->typed.validate(value, "erase"), false);
+	return _p->array.erase(value);
 }
 
 Variant Array::front() const {
