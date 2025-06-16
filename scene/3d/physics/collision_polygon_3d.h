@@ -54,8 +54,10 @@ protected:
 	bool disabled = false;
 
 	void _build_polygon();
+	void _custom_build_polygon();
 
 	void _update_in_shape_owner(bool p_xform_only = false);
+	void _custom_update_in_shape_owner(bool p_xform_only = false);
 
 	bool _is_editable_3d_polygon() const;
 

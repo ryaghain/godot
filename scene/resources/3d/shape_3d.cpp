@@ -169,6 +169,11 @@ void Shape3D::_update_shape() {
 	debug_mesh_cache.unref();
 }
 
+void Shape3D::_custom_update_shape() {
+	custom_emit_changed();
+	debug_mesh_cache.unref();
+}
+
 void Shape3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_custom_solver_bias", "bias"), &Shape3D::set_custom_solver_bias);
 	ClassDB::bind_method(D_METHOD("get_custom_solver_bias"), &Shape3D::get_custom_solver_bias);

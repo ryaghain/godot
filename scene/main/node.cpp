@@ -284,6 +284,22 @@ void Node::_propagate_ready() {
 	}
 }
 
+void Node::_custom_propagate_ready() {
+	data.ready_notified = true;
+	data.blocked++;
+	for (KeyValue<StringName, Node *> &K : data.children) {
+		K.value->_custom_propagate_ready();
+	}
+
+	data.blocked--;
+
+	if (data.ready_first) {
+		data.ready_first = false;
+		notification(NOTIFICATION_READY);
+		custom_emit_signal(SceneStringName(ready));
+	}
+}
+
 void Node::_propagate_enter_tree() {
 	// this needs to happen to all children before any enter_tree
 
@@ -325,6 +341,61 @@ void Node::_propagate_enter_tree() {
 	for (KeyValue<StringName, Node *> &K : data.children) {
 		if (!K.value->is_inside_tree()) { // could have been added in enter_tree
 			K.value->_propagate_enter_tree();
+		}
+	}
+
+	data.blocked--;
+
+#ifdef DEBUG_ENABLED
+	SceneDebugger::add_to_cache(data.scene_file_path, this);
+#endif
+	// enter groups
+}
+
+void Node::_custom_propagate_enter_tree() {
+	// this needs to happen to all children before any enter_tree
+
+	if (data.parent) {
+		data.parent->rwlock.read_lock();
+		data.tree = data.parent->data.tree;
+		data.depth = data.parent->data.depth + 1;
+		data.parent->rwlock.read_unlock();
+	} else {
+		data.depth = 1;
+	}
+
+	data.parent->rwlock.read_lock();
+	data.viewport = data.parent->data.viewport;
+	data.parent->rwlock.read_unlock();
+
+	data.inside_tree = true;
+
+	//for (KeyValue<StringName, GroupData> &E : data.grouped) {
+	//	E.value.group = data.tree->add_to_group(E.key, this);
+	//}
+
+	notification(NOTIFICATION_CUSTOM_ENTER_TREE);
+
+	GDVIRTUAL_CALL(_enter_tree);
+
+	custom_emit_signal(SceneStringName(tree_entered));
+
+	data.tree->custom_node_added(this);
+
+	data.parent->rwlock.write_lock();
+	if (data.parent) {
+		Variant c = this;
+		const Variant *cptr = &c;
+		data.parent->custom_emit_signalp(SNAME("child_entered_tree"), &cptr, 1);
+	}
+	data.parent->rwlock.write_unlock();
+
+	data.blocked++;
+	//block while adding children
+
+	for (KeyValue<StringName, Node *> &child_kv : data.children) {
+		if (!child_kv.value->is_inside_tree()) { // could have been added in enter_tree
+			child_kv.value->_custom_propagate_enter_tree();
 		}
 	}
 
@@ -1644,6 +1715,68 @@ void Node::_add_child_nocheck(Node *p_child, const StringName &p_name, InternalM
 	emit_signal(SNAME("child_order_changed"));
 }
 
+void Node::_custom_add_chunk_thread_safe_nocheck(Node *p_child, const StringName &p_name, InternalMode p_internal_mode) {
+
+	p_child->data.name = p_name;
+	rwlock.write_lock();
+	data.children.insert(p_name, p_child);
+	rwlock.write_unlock();
+
+	rwlock.read_lock();
+	Node::InternalMode parent_internal_mode = p_internal_mode;
+	rwlock.read_unlock();
+	p_child->data.internal_mode = parent_internal_mode;
+	switch (parent_internal_mode) {
+		case INTERNAL_MODE_FRONT: {
+			p_child->data.index = data.internal_children_front_count_cache++;
+		} break;
+		case INTERNAL_MODE_BACK: {
+			p_child->data.index = data.internal_children_back_count_cache++;
+		} break;
+		case INTERNAL_MODE_DISABLED: {
+			p_child->data.index = data.external_children_count_cache++;
+		} break;
+	}
+
+	p_child->data.parent = this;
+
+	rwlock.write_lock();
+	if (!data.children_cache_dirty && p_internal_mode == INTERNAL_MODE_DISABLED && data.internal_children_back_count_cache == 0) {
+		// Special case, also add to the cached children array since its cheap.
+		data.children_cache.push_back(p_child);
+	} else {
+		data.children_cache_dirty = true;
+	}
+	rwlock.write_unlock();
+
+	p_child->notification(NOTIFICATION_CUSTOM_PARENTED);
+
+	rwlock.read_lock();
+	SceneTree *p_tree = data.tree;
+	rwlock.read_unlock();
+	if (p_tree) {
+		p_child->_custom_set_tree(p_tree);
+	}
+
+	/* Notify */
+	//recognize children created in this node constructor
+	rwlock.read_lock();
+	p_child->data.parent_owned = data.in_constructor;
+	rwlock.read_unlock();
+
+	custom_emit_signal(SNAME("child_order_changed"));
+}
+
+void Node::_custom_add_child_nocheck_part_two(Node *p_child, const StringName &p_name, InternalMode p_internal_mode) {
+	// this part can only be run by the main thread
+
+	/* Notify */
+	//recognize children created in this node constructor
+	p_child->data.parent_owned = data.in_constructor;
+	
+	emit_signal(SNAME("child_order_changed"));
+}
+
 void Node::add_child(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
 	ERR_FAIL_COND_MSG(data.inside_tree && !Thread::is_main_thread(), "Adding children to a node inside the SceneTree is only allowed from the main thread. Use call_deferred(\"add_child\",node).");
 
@@ -1666,6 +1799,27 @@ void Node::add_child(Node *p_child, bool p_force_readable_name, InternalMode p_i
 #endif // DEBUG_ENABLED
 
 	_add_child_nocheck(p_child, p_child->data.name, p_internal);
+}
+
+void Node::custom_add_chunk_thread_safe(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
+	ERR_FAIL_NULL(p_child);
+	ERR_FAIL_COND_MSG(p_child == this, vformat("Can't add child '%s' to itself.", p_child->get_name())); // adding to itself!
+	ERR_FAIL_COND_MSG(p_child->data.parent, vformat("Can't add child '%s' to '%s', already has a parent '%s'.", p_child->get_name(), get_name(), p_child->data.parent->get_name())); //Fail if node has a parent
+#ifdef DEBUG_ENABLED
+	ERR_FAIL_COND_MSG(p_child->is_ancestor_of(this), vformat("Can't add child '%s' to '%s' as it would result in a cyclic dependency since '%s' is already a parent of '%s'.", p_child->get_name(), get_name(), p_child->get_name(), get_name()));
+#endif
+#ifdef DEBUG_ENABLED
+	if (p_child->data.owner && !p_child->data.owner->is_ancestor_of(p_child)) {
+		// Owner of p_child should be ancestor of p_child.
+		WARN_PRINT(vformat("Adding '%s' as child to '%s' will make owner '%s' inconsistent. Consider unsetting the owner beforehand.", p_child->get_name(), get_name(), p_child->data.owner->get_name()));
+	}
+#endif // DEBUG_ENABLED
+
+	_custom_add_chunk_thread_safe_nocheck(p_child, p_child->data.name, p_internal);
+}
+
+void Node::custom_add_child_part_two(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
+	_custom_add_child_nocheck_part_two(p_child, p_child->data.name, p_internal);
 }
 
 void Node::add_sibling(Node *p_sibling, bool p_force_readable_name) {
@@ -1865,8 +2019,94 @@ Node *Node::get_node_or_null(const NodePath &p_path) const {
 	return current;
 }
 
+Node *Node::custom_get_node_or_null(const NodePath &p_path) const {
+	if (p_path.is_empty()) {
+		return nullptr;
+	}
+
+	ERR_FAIL_COND_V_MSG(!data.inside_tree && p_path.is_absolute(), nullptr, "Can't use get_node() with absolute paths from outside the active scene tree.");
+
+	Node *current = nullptr;
+	Node *root = nullptr;
+
+	if (!p_path.is_absolute()) {
+		current = const_cast<Node *>(this); //start from this
+	} else {
+		root = const_cast<Node *>(this);
+		while (true) {
+			root->rwlock.read_lock();
+			if (!root->data.parent) {
+				root->rwlock.read_unlock();
+				break;
+			}
+			root = root->data.parent; //start from root
+			root->rwlock.read_unlock();
+		}
+	}
+
+	for (int i = 0; i < p_path.get_name_count(); i++) {
+		StringName name = p_path.get_name(i);
+		Node *next = nullptr;
+
+		if (name == SNAME(".")) {
+			next = current;
+
+		} else if (name == SNAME("..")) {
+			if (current == nullptr || !current->data.parent) {
+				return nullptr;
+			}
+
+			next = current->data.parent;
+		} else if (current == nullptr) {
+			root->rwlock.read_lock();
+			StringName root_name = root->get_name();
+			root->rwlock.read_unlock();
+			if (name == root_name) {
+				next = root;
+			}
+		} else if (name.is_node_unique_name()) {
+			Node **unique = current->data.owned_unique_nodes.getptr(name);
+			if (!unique && current->data.owner) {
+				unique = current->data.owner->data.owned_unique_nodes.getptr(name);
+			}
+			if (!unique) {
+				return nullptr;
+			}
+			next = *unique;
+		} else {
+			next = nullptr;
+			const Node *const *node = current->data.children.getptr(name);
+			if (node) {
+				next = const_cast<Node *>(*node);
+			} else {
+				return nullptr;
+			}
+		}
+		current = next;
+	}
+
+	return current;
+}
+
 Node *Node::get_node(const NodePath &p_path) const {
 	Node *node = get_node_or_null(p_path);
+
+	if (unlikely(!node)) {
+		const String desc = get_description();
+		if (p_path.is_absolute()) {
+			ERR_FAIL_V_MSG(nullptr,
+					vformat(R"(Node not found: "%s" (absolute path attempted from "%s").)", p_path, desc));
+		} else {
+			ERR_FAIL_V_MSG(nullptr,
+					vformat(R"(Node not found: "%s" (relative to "%s").)", p_path, desc));
+		}
+	}
+
+	return node;
+}
+
+Node *Node::custom_get_node(const NodePath &p_path) const {
+	Node *node = custom_get_node_or_null(p_path);
 
 	if (unlikely(!node)) {
 		const String desc = get_description();
@@ -3300,6 +3540,21 @@ void Node::_set_tree(SceneTree *p_tree) {
 	}
 }
 
+void Node::_custom_set_tree(SceneTree *p_tree) {
+	data.tree = p_tree;
+
+	_custom_propagate_enter_tree();
+
+	data.parent->rwlock.read_lock();
+	bool parent_ready_notified = data.parent->data.ready_notified;
+	data.parent->rwlock.read_unlock();
+	if (!data.parent || parent_ready_notified) { // No parent (root) or parent ready
+		_custom_propagate_ready(); //reverse_notification(NOTIFICATION_READY);
+	}
+
+	p_tree->custom_tree_changed();
+}
+
 #ifdef DEBUG_ENABLED
 static HashMap<ObjectID, List<String>> _print_orphan_nodes_map;
 
@@ -3615,6 +3870,7 @@ void Node::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_name", "name"), &Node::set_name);
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "force_readable_name", "internal"), &Node::add_child, DEFVAL(false), DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("custom_add_chunk_thread_safe", "node", "force_readable_name", "internal"), &Node::custom_add_chunk_thread_safe, DEFVAL(false), DEFVAL(0));
 	ClassDB::bind_method(D_METHOD("remove_child", "node"), &Node::remove_child);
 	ClassDB::bind_method(D_METHOD("reparent", "new_parent", "keep_global_transform"), &Node::reparent, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("get_child_count", "include_internal"), &Node::get_child_count, DEFVAL(false)); // Note that the default value bound for include_internal is false, while the method is declared with true. This is because internal nodes are irrelevant for GDSCript.

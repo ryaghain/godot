@@ -129,6 +129,7 @@ void Input::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_action_raw_strength", "action", "exact_match"), &Input::get_action_raw_strength, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("get_axis", "negative_action", "positive_action"), &Input::get_axis);
 	ClassDB::bind_method(D_METHOD("get_vector", "negative_x", "positive_x", "negative_y", "positive_y", "deadzone"), &Input::get_vector, DEFVAL(-1.0f));
+	ClassDB::bind_method(D_METHOD("get_vector3", "negative_x", "positive_x", "negative_z", "positive_z", "deadzone"), &Input::get_vector3, DEFVAL(-1.0f));
 	ClassDB::bind_method(D_METHOD("add_joy_mapping", "mapping", "update_existing"), &Input::add_joy_mapping, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("remove_joy_mapping", "guid"), &Input::remove_joy_mapping);
 	ClassDB::bind_method(D_METHOD("is_joy_known", "device"), &Input::is_joy_known);
@@ -496,6 +497,33 @@ Vector2 Input::get_vector(const StringName &p_negative_x, const StringName &p_po
 	float length = vector.length();
 	if (length <= p_deadzone) {
 		return Vector2();
+	} else if (length > 1.0f) {
+		return vector / length;
+	} else {
+		// Inverse lerp length to map (p_deadzone, 1) to (0, 1).
+		return vector * (Math::inverse_lerp(p_deadzone, 1.0f, length) / length);
+	}
+}
+
+Vector3 Input::get_vector3(const StringName &p_negative_x, const StringName &p_positive_x, const StringName &p_negative_z, const StringName &p_positive_z, float p_deadzone) const {
+	Vector3 vector = Vector3(
+			get_action_raw_strength(p_positive_x) - get_action_raw_strength(p_negative_x),
+			0.0,
+			get_action_raw_strength(p_positive_z) - get_action_raw_strength(p_negative_z));
+
+	if (p_deadzone < 0.0f) {
+		// If the deadzone isn't specified, get it from the average of the actions.
+		p_deadzone = 0.25 *
+				(InputMap::get_singleton()->action_get_deadzone(p_positive_x) +
+						InputMap::get_singleton()->action_get_deadzone(p_negative_x) +
+						InputMap::get_singleton()->action_get_deadzone(p_positive_z) +
+						InputMap::get_singleton()->action_get_deadzone(p_negative_z));
+	}
+
+	// Circular length limiting and deadzone.
+	float length = vector.length();
+	if (length <= p_deadzone) {
+		return Vector3();
 	} else if (length > 1.0f) {
 		return vector / length;
 	} else {

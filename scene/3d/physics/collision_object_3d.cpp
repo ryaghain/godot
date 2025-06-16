@@ -49,6 +49,21 @@ void CollisionObject3D::_notification(int p_what) {
 #endif
 		} break;
 
+		case NOTIFICATION_CUSTOM_ENTER_TREE: {
+			if (_are_collision_shapes_visible()) {
+				debug_shape_old_transform = get_global_transform();
+				for (const KeyValue<uint32_t, ShapeData> &E : shapes) {
+					debug_shapes_to_update.insert(E.key);
+				}
+				_update_debug_shapes();
+			}
+#ifdef TOOLS_ENABLED
+			if (Engine::get_singleton()->is_editor_hint()) {
+				set_notify_local_transform(true); // Used for warnings and only in editor.
+			}
+#endif
+		} break;
+
 		case NOTIFICATION_EXIT_TREE: {
 			if (debug_shapes_count > 0) {
 				_clear_debug_shapes();
@@ -559,6 +574,20 @@ void CollisionObject3D::shape_owner_set_disabled(uint32_t p_owner, bool p_disabl
 	_update_shape_data(p_owner);
 }
 
+void CollisionObject3D::custom_shape_owner_set_disabled(uint32_t p_owner, bool p_disabled) {
+	ERR_FAIL_COND(!shapes.has(p_owner));
+
+	ShapeData &sd = shapes[p_owner];
+	if (sd.disabled == p_disabled) {
+		return;
+	}
+	sd.disabled = p_disabled;
+
+	for (int i = 0; i < sd.shapes.size(); i++) {
+			PhysicsServer3D::get_singleton()->body_set_shape_disabled(rid, sd.shapes[i].index, p_disabled);
+	}
+}
+
 bool CollisionObject3D::is_shape_owner_disabled(uint32_t p_owner) const {
 	ERR_FAIL_COND_V(!shapes.has(p_owner), false);
 
@@ -595,6 +624,17 @@ void CollisionObject3D::shape_owner_set_transform(uint32_t p_owner, const Transf
 
 	_update_shape_data(p_owner);
 }
+
+void CollisionObject3D::custom_shape_owner_set_transform(uint32_t p_owner, const Transform3D &p_transform) {
+	ERR_FAIL_COND(!shapes.has(p_owner));
+
+	ShapeData &sd = shapes[p_owner];
+	sd.xform = p_transform;
+	for (int i = 0; i < sd.shapes.size(); i++) {
+		PhysicsServer3D::get_singleton()->body_set_shape_transform(rid, sd.shapes[i].index, p_transform);
+	}
+}
+
 Transform3D CollisionObject3D::shape_owner_get_transform(uint32_t p_owner) const {
 	ERR_FAIL_COND_V(!shapes.has(p_owner), Transform3D());
 
@@ -627,6 +667,21 @@ void CollisionObject3D::shape_owner_add_shape(uint32_t p_owner, const Ref<Shape3
 
 	_update_shape_data(p_owner);
 	update_gizmos();
+}
+
+void CollisionObject3D::custom_shape_owner_add_shape(uint32_t p_owner, const Ref<Shape3D> &p_shape) {
+	ERR_FAIL_COND(!shapes.has(p_owner));
+	ERR_FAIL_COND(p_shape.is_null());
+
+	ShapeData &sd = shapes[p_owner];
+	ShapeData::ShapeBase s;
+	s.index = total_subshapes;
+	s.shape = p_shape;
+
+	PhysicsServer3D::get_singleton()->body_add_shape(rid, p_shape->get_rid(), sd.xform, sd.disabled);
+	sd.shapes.push_back(s);
+
+	total_subshapes++;
 }
 
 int CollisionObject3D::shape_owner_get_shape_count(uint32_t p_owner) const {

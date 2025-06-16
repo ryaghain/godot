@@ -43,9 +43,11 @@ protected:
 	static void _bind_methods();
 
 	virtual void _update_shape() override;
+	virtual void _custom_update_shape() override;
 
 public:
 	void set_points(const Vector<Vector3> &p_points);
+	void custom_set_points(const Vector<Vector3> &p_points);
 	Vector<Vector3> get_points() const;
 
 	virtual Vector<Vector3> get_debug_mesh_lines() const override;

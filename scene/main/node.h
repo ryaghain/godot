@@ -261,6 +261,8 @@ private:
 
 	} data;
 
+	Mutex mutex;
+
 	Ref<MultiplayerAPI> multiplayer;
 
 	String _get_tree_string_pretty(const String &p_prefix, bool p_last);
@@ -276,8 +278,11 @@ private:
 	void _propagate_reverse_notification(int p_notification);
 	void _propagate_deferred_notification(int p_notification, bool p_reverse);
 	void _propagate_enter_tree();
+	void _custom_propagate_enter_tree();
 	void _propagate_ready();
+	void _custom_propagate_ready();
 	void _propagate_exit_tree();
+	void _custom_propagate_exit_tree();
 	void _propagate_after_exit_tree();
 	void _propagate_physics_interpolated(bool p_interpolated);
 	void _propagate_physics_interpolation_reset_requested(bool p_requested);
@@ -298,6 +303,7 @@ private:
 	friend class SceneTree;
 
 	void _set_tree(SceneTree *p_tree);
+	void _custom_set_tree(SceneTree *p_tree);
 	void _propagate_pause_notification(bool p_enable);
 	void _propagate_suspend_notification(bool p_enable);
 
@@ -358,6 +364,7 @@ protected:
 	friend class SceneState;
 
 	void _add_child_nocheck(Node *p_child, const StringName &p_name, InternalMode p_internal_mode = INTERNAL_MODE_DISABLED);
+	void _custom_add_chunk_thread_safe_nocheck(Node *p_child, const StringName &p_name, InternalMode p_internal_mode = INTERNAL_MODE_DISABLED);
 	void _set_owner_nocheck(Node *p_owner);
 	void _set_name_nocheck(const StringName &p_name);
 
@@ -449,6 +456,9 @@ public:
 		NOTIFICATION_EDITOR_POST_SAVE = 9002,
 		NOTIFICATION_SUSPENDED = 9003,
 		NOTIFICATION_UNSUSPENDED = 9004
+
+		NOTIFICATION_CUSTOM_PARENTED = 777,
+		NOTIFICATION_CUSTOM_ENTER_TREE = 778,
 	};
 
 	/* NODE/TREE */
@@ -460,6 +470,7 @@ public:
 	InternalMode get_internal_mode() const;
 
 	void add_child(Node *p_child, bool p_force_readable_name = false, InternalMode p_internal = INTERNAL_MODE_DISABLED);
+	void custom_add_chunk_thread_safe(Node *p_child, bool p_force_readable_name = false, InternalMode p_internal = INTERNAL_MODE_DISABLED);
 	void add_sibling(Node *p_sibling, bool p_force_readable_name = false);
 	void remove_child(Node *p_child);
 
@@ -468,7 +479,9 @@ public:
 	TypedArray<Node> get_children(bool p_include_internal = true) const;
 	bool has_node(const NodePath &p_path) const;
 	Node *get_node(const NodePath &p_path) const;
+	Node *custom_get_node(const NodePath &p_path) const;
 	Node *get_node_or_null(const NodePath &p_path) const;
+	Node *custom_get_node_or_null(const NodePath &p_path) const;
 	Node *find_child(const String &p_pattern, bool p_recursive = true, bool p_owned = true) const;
 	TypedArray<Node> find_children(const String &p_pattern, const String &p_type = "", bool p_recursive = true, bool p_owned = true) const;
 	bool has_node_and_resource(const NodePath &p_path) const;

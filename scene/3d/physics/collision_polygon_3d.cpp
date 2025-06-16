@@ -68,12 +68,44 @@ void CollisionPolygon3D::_build_polygon() {
 			}
 		}
 
-		convex->set_points(cp);
+		convex->custom_set_points(cp);
 		convex->set_margin(margin);
 		convex->set_debug_color(debug_color);
 		convex->set_debug_fill(debug_fill);
 		collision_object->shape_owner_add_shape(owner_id, convex);
 		collision_object->shape_owner_set_disabled(owner_id, disabled);
+	}
+}
+
+void CollisionPolygon3D::_custom_build_polygon() {
+
+	Vector<Vector<Vector2>> decomp = Geometry2D::decompose_polygon_in_convex(polygon);
+	if (decomp.size() == 0) {
+		return;
+	}
+
+	//here comes the sun, lalalala
+	//decompose concave into multiple convex polygons and add them
+
+	for (int i = 0; i < decomp.size(); i++) {
+		Ref<ConvexPolygonShape3D> convex = memnew(ConvexPolygonShape3D);
+		Vector<Vector3> cp;
+		int cs = decomp[i].size();
+		cp.resize(cs * 2);
+		{
+			Vector3 *w = cp.ptrw();
+			int idx = 0;
+			for (int j = 0; j < cs; j++) {
+				Vector2 d = decomp[i][j];
+				w[idx++] = Vector3(d.x, d.y, depth * 0.5);
+				w[idx++] = Vector3(d.x, d.y, -depth * 0.5);
+			}
+		}
+
+		convex->set_points(cp);
+		convex->set_margin(margin);
+		collision_object->custom_shape_owner_add_shape(owner_id, convex);
+		collision_object->custom_shape_owner_set_disabled(owner_id, disabled);
 	}
 }
 
@@ -83,6 +115,14 @@ void CollisionPolygon3D::_update_in_shape_owner(bool p_xform_only) {
 		return;
 	}
 	collision_object->shape_owner_set_disabled(owner_id, disabled);
+}
+
+void CollisionPolygon3D::_custom_update_in_shape_owner(bool p_xform_only) {
+	collision_object->custom_shape_owner_set_transform(owner_id, custom_get_transform());
+	if (p_xform_only) {
+		return;
+	}
+	collision_object->custom_shape_owner_set_disabled(owner_id, disabled);
 }
 
 void CollisionPolygon3D::_notification(int p_what) {
@@ -96,9 +136,24 @@ void CollisionPolygon3D::_notification(int p_what) {
 			}
 		} break;
 
+		case NOTIFICATION_CUSTOM_PARENTED: {
+			collision_object = Object::cast_to<CollisionObject3D>(get_parent());
+			if (collision_object) {
+				owner_id = collision_object->create_shape_owner(this);
+				_custom_build_polygon();
+				_custom_update_in_shape_owner();
+			}
+		} break;
+
 		case NOTIFICATION_ENTER_TREE: {
 			if (collision_object) {
 				_update_in_shape_owner();
+			}
+		} break;
+
+		case NOTIFICATION_CUSTOM_ENTER_TREE: {
+			if (collision_object) {
+				_custom_update_in_shape_owner();
 			}
 		} break;
 

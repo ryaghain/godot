@@ -1105,6 +1105,98 @@ void Object::get_meta_list(List<StringName> *p_list) const {
 	}
 }
 
+Error Object::custom_emit_signalp(const StringName &p_name, const Variant **p_args, int p_argcount) {
+	if (_block_signals) {
+		return ERR_CANT_ACQUIRE_RESOURCE; //no emit, signals blocked
+	}
+
+	SignalData *s = signal_map.getptr(p_name);
+	if (!s) {
+#ifdef DEBUG_ENABLED
+		bool signal_is_valid = ClassDB::has_signal(get_class_name(), p_name);
+		//check in script
+		ERR_FAIL_COND_V_MSG(!signal_is_valid && !script.is_null() && !Ref<Script>(script)->has_script_signal(p_name), ERR_UNAVAILABLE, "Can't emit non-existing signal " + String("\"") + p_name + "\".");
+#endif
+		//not connected? just return
+		return ERR_UNAVAILABLE;
+	}
+
+	// If this is a ref-counted object, prevent it from being destroyed during signal emission,
+	// which is needed in certain edge cases; e.g., https://github.com/godotengine/godot/issues/73889.
+	Ref<RefCounted> rc = Ref<RefCounted>(Object::cast_to<RefCounted>(this));
+
+	// Ensure that disconnecting the signal or even deleting the object
+	// will not affect the signal calling.
+	Callable *slot_callables = (Callable *)alloca(sizeof(Callable) * s->slot_map.size());
+	uint32_t *slot_flags = (uint32_t *)alloca(sizeof(uint32_t) * s->slot_map.size());
+	uint32_t slot_count = 0;
+
+	for (const KeyValue<Callable, SignalData::Slot> &slot_kv : s->slot_map) {
+		memnew_placement(&slot_callables[slot_count], Callable(slot_kv.value.conn.callable));
+		slot_flags[slot_count] = slot_kv.value.conn.flags;
+		++slot_count;
+	}
+
+	DEV_ASSERT(slot_count == s->slot_map.size());
+
+	// Disconnect all one-shot connections before emitting to prevent recursion.
+	for (uint32_t i = 0; i < slot_count; ++i) {
+		bool disconnect = slot_flags[i] & CONNECT_ONE_SHOT;
+#ifdef TOOLS_ENABLED
+		if (disconnect && (slot_flags[i] & CONNECT_PERSIST) && Engine::get_singleton()->is_editor_hint()) {
+			// This signal was connected from the editor, and is being edited. Just don't disconnect for now.
+			disconnect = false;
+		}
+#endif
+		if (disconnect) {
+			_disconnect(p_name, slot_callables[i]);
+		}
+	}
+
+	OBJ_DEBUG_LOCK
+
+	Error err = OK;
+
+	for (uint32_t i = 0; i < slot_count; ++i) {
+		const Callable &callable = slot_callables[i];
+		const uint32_t &flags = slot_flags[i];
+
+		const Variant **args = p_args;
+		int argc = p_argcount;
+
+		if (flags & CONNECT_DEFERRED) {
+			MessageQueue::get_singleton()->push_callablep(callable, args, argc, true);
+		} else {
+			Callable::CallError ce;
+			_emitting = true;
+			Variant ret;
+			callable.callp(args, argc, ret, ce);
+			_emitting = false;
+
+			if (ce.error != Callable::CallError::CALL_OK) {
+#ifdef DEBUG_ENABLED
+				if (flags & CONNECT_PERSIST && Engine::get_singleton()->is_editor_hint() && (script.is_null() || !Ref<Script>(script)->is_tool())) {
+					continue;
+				}
+#endif
+				Object *target = callable.get_object();
+				if (ce.error == Callable::CallError::CALL_ERROR_INVALID_METHOD && target && !ClassDB::class_exists(target->get_class_name())) {
+					//most likely object is not initialized yet, do not throw error.
+				} else {
+					ERR_PRINT("Error calling from signal '" + String(p_name) + "' to callable: " + Variant::get_callable_error_text(callable, args, argc, ce) + ".");
+					err = ERR_METHOD_NOT_FOUND;
+				}
+			}
+		}
+	}
+
+	for (uint32_t i = 0; i < slot_count; ++i) {
+		slot_callables[i].~Callable();
+	}
+
+	return err;
+}
+
 void Object::add_user_signal(const MethodInfo &p_signal) {
 	ERR_FAIL_COND_MSG(p_signal.name.is_empty(), "Signal name cannot be empty.");
 	ERR_FAIL_COND_MSG(ClassDB::has_signal(get_class_name(), p_signal.name), vformat("User signal's name conflicts with a built-in signal of '%s'.", get_class_name()));

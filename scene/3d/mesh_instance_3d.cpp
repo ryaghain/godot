@@ -193,6 +193,30 @@ void MeshInstance3D::_resolve_skeleton_path() {
 	}
 }
 
+void MeshInstance3D::_custom_resolve_skeleton_path() {
+	Ref<SkinReference> new_skin_reference;
+
+	Skeleton3D *skeleton = Object::cast_to<Skeleton3D>(get_parent());
+	if (skeleton) {
+		if (skin_internal.is_null()) {
+			new_skin_reference = skeleton->register_skin(skeleton->create_skin_from_rest_transforms());
+			//a skin was created for us
+			skin_internal = new_skin_reference->get_skin();
+			notify_property_list_changed();
+		} else {
+			new_skin_reference = skeleton->register_skin(skin_internal);
+		}
+	}
+
+	skin_ref = new_skin_reference;
+
+	if (skin_ref.is_valid()) {
+		RenderingServer::get_singleton()->instance_attach_skeleton(get_instance(), skin_ref->get_skeleton());
+	} else {
+		RenderingServer::get_singleton()->instance_attach_skeleton(get_instance(), RID());
+	}
+}
+
 void MeshInstance3D::set_skin(const Ref<Skin> &p_skin) {
 	skin_internal = p_skin;
 	skin = p_skin;
@@ -337,6 +361,11 @@ void MeshInstance3D::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			_resolve_skeleton_path();
 		} break;
+		
+		case NOTIFICATION_CUSTOM_ENTER_TREE: {
+			_custom_resolve_skeleton_path();
+		} break;
+
 		case NOTIFICATION_TRANSLATION_CHANGED: {
 			if (mesh.is_valid()) {
 				mesh->notification(NOTIFICATION_TRANSLATION_CHANGED);

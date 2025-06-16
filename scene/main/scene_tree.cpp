@@ -136,8 +136,16 @@ void SceneTree::tree_changed() {
 	emit_signal(tree_changed_name);
 }
 
+void SceneTree::custom_tree_changed() {
+	custom_emit_signal(tree_changed_name);
+}
+
 void SceneTree::node_added(Node *p_node) {
 	emit_signal(node_added_name, p_node);
+}
+
+void SceneTree::custom_node_added(Node *p_node) {
+	custom_emit_signal(node_added_name, p_node);
 }
 
 void SceneTree::node_removed(Node *p_node) {

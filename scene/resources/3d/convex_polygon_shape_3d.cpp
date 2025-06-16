@@ -107,10 +107,21 @@ void ConvexPolygonShape3D::_update_shape() {
 	Shape3D::_update_shape();
 }
 
+void ConvexPolygonShape3D::_custom_update_shape() {
+	PhysicsServer3D::get_singleton()->shape_set_data(get_shape(), points);
+	Shape3D::_custom_update_shape();
+}
+
 void ConvexPolygonShape3D::set_points(const Vector<Vector3> &p_points) {
 	points = p_points;
 	_update_shape();
 	emit_changed();
+}
+
+void ConvexPolygonShape3D::custom_set_points(const Vector<Vector3> &p_points) {
+	points = p_points;
+	_custom_update_shape();
+	custom_emit_changed();
 }
 
 Vector<Vector3> ConvexPolygonShape3D::get_points() const {

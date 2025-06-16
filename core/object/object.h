@@ -768,6 +768,8 @@ protected:
 
 	bool _disconnect(const StringName &p_signal, const Callable &p_callable, bool p_force = false);
 
+	RWLock rwlock;
+
 #ifdef TOOLS_ENABLED
 	struct VirtualMethodTracker {
 		void **method;
@@ -786,6 +788,7 @@ public:
 	static constexpr bool _class_is_enabled = true;
 
 	void notify_property_list_changed();
+	void custom_notify_property_list_changed();
 
 	static void *get_class_ptr_static() {
 		static int ptr;
@@ -933,7 +936,18 @@ public:
 		return emit_signalp(p_name, sizeof...(p_args) == 0 ? nullptr : (const Variant **)argptrs, sizeof...(p_args));
 	}
 
+	template <typename... VarArgs>
+	Error custom_emit_signal(const StringName &p_name, VarArgs... p_args) {
+		Variant args[sizeof...(p_args) + 1] = { p_args..., Variant() }; // +1 makes sure zero sized arrays are also supported.
+		const Variant *argptrs[sizeof...(p_args) + 1];
+		for (uint32_t i = 0; i < sizeof...(p_args); i++) {
+			argptrs[i] = &args[i];
+		}
+		return custom_emit_signalp(p_name, sizeof...(p_args) == 0 ? nullptr : (const Variant **)argptrs, sizeof...(p_args));
+	}
+
 	MTVIRTUAL Error emit_signalp(const StringName &p_name, const Variant **p_args, int p_argcount);
+	MTVIRTUAL Error custom_emit_signalp(const StringName &p_name, const Variant **p_args, int p_argcount);
 	MTVIRTUAL bool has_signal(const StringName &p_name) const;
 	MTVIRTUAL void get_signal_list(List<MethodInfo> *p_signals) const;
 	MTVIRTUAL void get_signal_connection_list(const StringName &p_signal, List<Connection> *p_connections) const;

@@ -349,6 +349,14 @@ Transform3D Node3D::get_transform() const {
 	return data.local_transform;
 }
 
+Transform3D Node3D::custom_get_transform() const {
+	if (_test_dirty_bits(DIRTY_LOCAL_TRANSFORM)) {
+		// This update can happen if needed over multiple threads.
+		_update_local_transform();
+	}
+	return data.local_transform;
+}
+
 // Return false to timeout and remove from the client interpolation list.
 bool Node3D::update_client_physics_interpolation_data() {
 	if (!is_inside_tree() || !_is_physics_interpolated_client_side()) {

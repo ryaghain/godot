@@ -215,7 +215,9 @@ private:
 	friend class Node;
 
 	void tree_changed();
+	void custom_tree_changed();
 	void node_added(Node *p_node);
+	void custom_node_added(Node *p_node);
 	void node_removed(Node *p_node);
 	void node_renamed(Node *p_node);
 	void process_timers(double p_delta, bool p_physics_frame);

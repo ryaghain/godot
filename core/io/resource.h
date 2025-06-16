@@ -107,6 +107,7 @@ public:
 	virtual void reload_from_file();
 
 	void emit_changed();
+	void custom_emit_changed();
 	void connect_changed(const Callable &p_callable, uint32_t p_flags = 0);
 	void disconnect_changed(const Callable &p_callable);
 

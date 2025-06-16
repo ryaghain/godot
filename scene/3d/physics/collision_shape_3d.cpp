@@ -77,6 +77,14 @@ void CollisionShape3D::_update_in_shape_owner(bool p_xform_only) {
 	collision_object->shape_owner_set_disabled(owner_id, disabled);
 }
 
+void CollisionShape3D::_custom_update_in_shape_owner(bool p_xform_only) {
+	collision_object->custom_shape_owner_set_transform(owner_id, custom_get_transform());
+	if (p_xform_only) {
+		return;
+	}
+	collision_object->custom_shape_owner_set_disabled(owner_id, disabled);
+}
+
 void CollisionShape3D::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_PARENTED: {
@@ -91,9 +99,26 @@ void CollisionShape3D::_notification(int p_what) {
 			}
 		} break;
 
+		case NOTIFICATION_CUSTOM_PARENTED: {
+			collision_object = Object::cast_to<CollisionObject3D>(get_parent());
+			if (collision_object) {
+				owner_id = collision_object->create_shape_owner(this);
+				if (shape.is_valid()) {
+					collision_object->custom_shape_owner_add_shape(owner_id, shape);
+				}
+				_custom_update_in_shape_owner();
+			}
+		} break;
+
 		case NOTIFICATION_ENTER_TREE: {
 			if (collision_object) {
 				_update_in_shape_owner();
+			}
+		} break;
+
+		case NOTIFICATION_CUSTOM_ENTER_TREE: {
+			if (collision_object) {
+				_custom_update_in_shape_owner();
 			}
 		} break;
 

@@ -314,6 +314,7 @@ public:
 
 	float get_axis(const StringName &p_negative_action, const StringName &p_positive_action) const;
 	Vector2 get_vector(const StringName &p_negative_x, const StringName &p_positive_x, const StringName &p_negative_y, const StringName &p_positive_y, float p_deadzone = -1.0f) const;
+	Vector3 get_vector3(const StringName &p_negative_x, const StringName &p_positive_x, const StringName &p_negative_y, const StringName &p_positive_y, float p_deadzone = -1.0f) const;
 
 	float get_joy_axis(int p_device, JoyAxis p_axis) const;
 	String get_joy_name(int p_idx);

@@ -149,13 +149,16 @@ public:
 	PackedInt32Array _get_shape_owners();
 
 	void shape_owner_set_transform(uint32_t p_owner, const Transform3D &p_transform);
+	void custom_shape_owner_set_transform(uint32_t p_owner, const Transform3D &p_transform);
 	Transform3D shape_owner_get_transform(uint32_t p_owner) const;
 	Object *shape_owner_get_owner(uint32_t p_owner) const;
 
 	void shape_owner_set_disabled(uint32_t p_owner, bool p_disabled);
+	void custom_shape_owner_set_disabled(uint32_t p_owner, bool p_disabled);
 	bool is_shape_owner_disabled(uint32_t p_owner) const;
 
 	void shape_owner_add_shape(uint32_t p_owner, const Ref<Shape3D> &p_shape);
+	void custom_shape_owner_add_shape(uint32_t p_owner, const Ref<Shape3D> &p_shape);
 	int shape_owner_get_shape_count(uint32_t p_owner) const;
 	Ref<Shape3D> shape_owner_get_shape(uint32_t p_owner, int p_shape) const;
 	int shape_owner_get_shape_index(uint32_t p_owner, int p_shape) const;

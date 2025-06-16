@@ -248,6 +248,7 @@
 #include "scene/3d/look_at_modifier_3d.h"
 #include "scene/3d/marker_3d.h"
 #include "scene/3d/mesh_instance_3d.h"
+#include "scene/3d/chunk_mesh.h"
 #include "scene/3d/multimesh_instance_3d.h"
 #include "scene/3d/navigation_agent_3d.h"
 #include "scene/3d/navigation_link_3d.h"
@@ -262,6 +263,7 @@
 #include "scene/3d/physics/character_body_3d.h"
 #include "scene/3d/physics/collision_polygon_3d.h"
 #include "scene/3d/physics/collision_shape_3d.h"
+#include "scene/3d/physics/chunk_shape.h"
 #include "scene/3d/physics/joints/cone_twist_joint_3d.h"
 #include "scene/3d/physics/joints/generic_6dof_joint_3d.h"
 #include "scene/3d/physics/joints/hinge_joint_3d.h"
@@ -276,6 +278,7 @@
 #include "scene/3d/physics/shape_cast_3d.h"
 #include "scene/3d/physics/spring_arm_3d.h"
 #include "scene/3d/physics/static_body_3d.h"
+#include "scene/3d/physics/chunk.h"
 #include "scene/3d/physics/vehicle_body_3d.h"
 #include "scene/3d/reflection_probe.h"
 #include "scene/3d/remote_transform_3d.h"
@@ -564,6 +567,7 @@ void register_scene_types() {
 	GDREGISTER_CLASS(XRHandModifier3D);
 	GDREGISTER_CLASS(XRFaceModifier3D);
 	GDREGISTER_CLASS(MeshInstance3D);
+	GDREGISTER_CLASS(ChunkMesh);
 	GDREGISTER_CLASS(OccluderInstance3D);
 	GDREGISTER_ABSTRACT_CLASS(Occluder3D);
 	GDREGISTER_CLASS(ArrayOccluder3D);
@@ -613,6 +617,7 @@ void register_scene_types() {
 	GDREGISTER_ABSTRACT_CLASS(CollisionObject3D);
 	GDREGISTER_ABSTRACT_CLASS(PhysicsBody3D);
 	GDREGISTER_CLASS(StaticBody3D);
+	GDREGISTER_CLASS(Chunk);
 	GDREGISTER_CLASS(AnimatableBody3D);
 	GDREGISTER_CLASS(RigidBody3D);
 	GDREGISTER_CLASS(KinematicCollision3D);
@@ -631,6 +636,7 @@ void register_scene_types() {
 	GDREGISTER_CLASS(VehicleWheel3D);
 	GDREGISTER_CLASS(Area3D);
 	GDREGISTER_CLASS(CollisionShape3D);
+	GDREGISTER_CLASS(ChunkShape)
 	GDREGISTER_CLASS(CollisionPolygon3D);
 	GDREGISTER_CLASS(RayCast3D);
 	GDREGISTER_CLASS(ShapeCast3D);

@@ -55,6 +55,7 @@ protected:
 
 	void _mesh_changed();
 	void _resolve_skeleton_path();
+	void _custom_resolve_skeleton_path();
 
 protected:
 	bool _set(const StringName &p_name, const Variant &p_value);

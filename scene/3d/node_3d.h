@@ -223,6 +223,7 @@ public:
 	void set_global_transform(const Transform3D &p_transform);
 
 	Transform3D get_transform() const;
+	Transform3D custom_get_transform() const;
 	Basis get_basis() const;
 	Quaternion get_quaternion() const;
 	Transform3D get_global_transform() const;

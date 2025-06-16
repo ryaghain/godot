@@ -86,7 +86,7 @@ Error CallQueue::push_set(Object *p_object, const StringName &p_prop, const Vari
 Error CallQueue::push_callablep(const Callable &p_callable, const Variant **p_args, int p_argcount, bool p_show_error) {
 	uint32_t room_needed = sizeof(Message) + sizeof(Variant) * p_argcount;
 
-	ERR_FAIL_COND_V_MSG(room_needed > uint32_t(PAGE_SIZE_BYTES), ERR_INVALID_PARAMETER, "Message is too large to fit on a page (" + itos(PAGE_SIZE_BYTES) + " bytes), consider passing less arguments.");
+	ERR_FAIL_COND_V_MSG(room_needed > uint32_t(PAGE_SIZE_BYTES), ERR_INVALID_PARAMETER, "Message is too large to fit on a page (" + itos(PAGE_SIZE_BYTES) + " bytes), consider passing fewer arguments.");
 
 	LOCK_MUTEX;
 

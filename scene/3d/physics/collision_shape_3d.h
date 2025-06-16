@@ -59,6 +59,7 @@ class CollisionShape3D : public Node3D {
 
 protected:
 	void _update_in_shape_owner(bool p_xform_only = false);
+	void _custom_update_in_shape_owner(bool p_xform_only = false);
 
 protected:
 	void _notification(int p_what);

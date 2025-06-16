@@ -953,6 +953,73 @@ struct _VariantCall {
 		return dest;
 	}
 
+	static PackedVector3Array func_PackedByteArray_custom_to_mesh_vertices(PackedByteArray *p_instance) {
+		uint32_t source_size = p_instance->size();
+		PackedVector3Array destination;
+		if (source_size == 0) {
+			return destination;
+		}
+		ERR_FAIL_COND_V_MSG(source_size % 3, destination, "PackedByteArray size must be a multiple of 3 to convert to vertices.");
+		const uint8_t *source = p_instance->ptr();
+		destination.resize(source_size / 3);
+		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		uint32_t destination_index = 0;
+		for (uint32_t i = 0; i < source_size; i = i + 3) {
+			Vector3 value = Vector3(static_cast<real_t>(p_instance->get(i)), static_cast<real_t>(p_instance->get(i + 1)), static_cast<real_t>(p_instance->get(i + 2)));
+			destination.set(destination_index, value);
+			destination_index++;
+		}
+		return destination;
+	}
+
+	static PackedVector3Array func_PackedByteArray_custom_to_mesh_normals(PackedByteArray *p_instance) {
+		uint32_t source_size = p_instance->size();
+		PackedVector3Array destination;
+		if (source_size == 0) {
+			return destination;
+		}
+		const uint8_t *source = p_instance->ptr();
+		destination.resize(source_size * 6);
+		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		Vector3 normal_vectors[6] {Vector3(0,1,0), Vector3(0,-1,0), Vector3(-1,0,0), Vector3(1,0,0), Vector3(0,0,-1), Vector3(0,0,1)};
+		uint32_t destination_index = 0;
+		for (uint32_t i = 0; i < source_size; i++) {
+			Vector3 value = normal_vectors[p_instance->get(i)];
+			for (uint8_t n = 0; n < 6; n++) {
+				destination.set(destination_index, value);
+				destination_index++;
+			}
+		}
+		return destination;
+	}
+
+	static PackedByteArray func_PackedByteArray_custom_to_mesh_custom_data(PackedByteArray *p_instance) {
+		uint32_t source_size = p_instance->size();
+		PackedByteArray destination;
+		if (source_size == 0) {
+			return destination;
+		}
+		const uint8_t *source = p_instance->ptr();
+		destination.resize(source_size * 6);
+		ERR_FAIL_COND_V(destination.is_empty(), destination); // Avoid UB in case resize failed.
+		uint32_t destination_index = 0;
+		for (uint32_t i = 0; i < source_size; i = i + 4) {
+			uint8_t value1 = p_instance->get(i    );
+			uint8_t value2 = p_instance->get(i + 1);
+			uint8_t value3 = p_instance->get(i + 2);
+			uint8_t value4 = p_instance->get(i + 3);
+			for (uint8_t n = 0; n < 6; n++) {
+				destination.set(destination_index    , value1);
+				destination.set(destination_index + 1, value2);
+				destination.set(destination_index + 2, value3);
+				destination.set(destination_index + 3, value4);
+				destination_index = destination_index + 4;
+			}
+		}
+		return destination;
+	}
+
+
 	static void func_PackedByteArray_encode_u8(PackedByteArray *p_instance, int64_t p_offset, int64_t p_value) {
 		uint64_t size = p_instance->size();
 		ERR_FAIL_COND(p_offset < 0 || p_offset > int64_t(size) - 1);
@@ -2479,6 +2546,10 @@ static void _register_variant_builtin_methods_array() {
 	bind_function(PackedByteArray, to_int64_array, _VariantCall::func_PackedByteArray_decode_s64_array, sarray(), varray());
 	bind_function(PackedByteArray, to_float32_array, _VariantCall::func_PackedByteArray_decode_float_array, sarray(), varray());
 	bind_function(PackedByteArray, to_float64_array, _VariantCall::func_PackedByteArray_decode_double_array, sarray(), varray());
+
+	bind_function(PackedByteArray, custom_to_mesh_vertices, _VariantCall::func_PackedByteArray_custom_to_mesh_vertices, sarray(), varray());
+	bind_function(PackedByteArray, custom_to_mesh_normals, _VariantCall::func_PackedByteArray_custom_to_mesh_normals, sarray(), varray());
+	bind_function(PackedByteArray, custom_to_mesh_custom_data, _VariantCall::func_PackedByteArray_custom_to_mesh_custom_data, sarray(), varray());
 
 	bind_functionnc(PackedByteArray, encode_u8, _VariantCall::func_PackedByteArray_encode_u8, sarray("byte_offset", "value"), varray());
 	bind_functionnc(PackedByteArray, encode_s8, _VariantCall::func_PackedByteArray_encode_s8, sarray("byte_offset", "value"), varray());

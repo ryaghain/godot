@@ -63,6 +63,7 @@ protected:
 	Ref<Material> get_debug_collision_material();
 
 	virtual void _update_shape();
+	virtual void _custom_update_shape();
 
 public:
 	virtual RID get_rid() const override { return shape; }

@@ -44,6 +44,15 @@ void Resource::emit_changed() {
 	emit_signal(CoreStringName(changed));
 }
 
+void Resource::custom_emit_changed() {
+	if (ResourceLoader::is_within_load() && !Thread::is_main_thread()) {
+		ResourceLoader::resource_changed_emit(this);
+		return;
+	}
+
+	custom_emit_signal(CoreStringName(changed));
+}
+
 void Resource::_resource_path_changed() {
 }
 
