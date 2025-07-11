@@ -1767,16 +1767,6 @@ void Node::_custom_add_chunk_thread_safe_nocheck(Node *p_child, const StringName
 	custom_emit_signal(SNAME("child_order_changed"));
 }
 
-void Node::_custom_add_child_nocheck_part_two(Node *p_child, const StringName &p_name, InternalMode p_internal_mode) {
-	// this part can only be run by the main thread
-
-	/* Notify */
-	//recognize children created in this node constructor
-	p_child->data.parent_owned = data.in_constructor;
-	
-	emit_signal(SNAME("child_order_changed"));
-}
-
 void Node::add_child(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
 	ERR_FAIL_COND_MSG(data.inside_tree && !Thread::is_main_thread(), "Adding children to a node inside the SceneTree is only allowed from the main thread. Use call_deferred(\"add_child\",node).");
 
@@ -1816,10 +1806,6 @@ void Node::custom_add_chunk_thread_safe(Node *p_child, bool p_force_readable_nam
 #endif // DEBUG_ENABLED
 
 	_custom_add_chunk_thread_safe_nocheck(p_child, p_child->data.name, p_internal);
-}
-
-void Node::custom_add_child_part_two(Node *p_child, bool p_force_readable_name, InternalMode p_internal) {
-	_custom_add_child_nocheck_part_two(p_child, p_child->data.name, p_internal);
 }
 
 void Node::add_sibling(Node *p_sibling, bool p_force_readable_name) {

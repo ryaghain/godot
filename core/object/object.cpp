@@ -1775,6 +1775,10 @@ void Object::notify_property_list_changed() {
 	emit_signal(CoreStringName(property_list_changed));
 }
 
+void Object::custom_notify_property_list_changed() {
+	custom_emit_signal(CoreStringName(property_list_changed));
+}
+
 void Object::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_class"), &Object::get_class);
 	ClassDB::bind_method(D_METHOD("is_class", "class"), &Object::is_class);

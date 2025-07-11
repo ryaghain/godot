@@ -496,6 +496,11 @@ const Variant &Array::get(int p_idx) const {
 	return operator[](p_idx);
 }
 
+//Ref Array::get_ref() {
+//	Ref ref = this;
+//	return ref;
+//}
+
 Array Array::duplicate(bool p_deep) const {
 	return recursive_duplicate(p_deep, 0);
 }

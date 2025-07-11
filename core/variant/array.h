@@ -32,6 +32,7 @@
 #define ARRAY_H
 
 #include "core/typedefs.h"
+//#include "core/object/ref_counted.h"
 
 #include <climits>
 
@@ -118,6 +119,8 @@ public:
 
 	void set(int p_idx, const Variant &p_value);
 	const Variant &get(int p_idx) const;
+
+	//Ref get_ref();
 
 	int size() const;
 	bool is_empty() const;
