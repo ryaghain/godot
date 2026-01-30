@@ -2369,6 +2369,26 @@ void Control::grab_focus(bool p_hide_focus) {
 	get_viewport()->_gui_control_grab_focus(this, p_hide_focus);
 }
 
+void Control::grab_focus_deferred() {
+	MessageQueue::get_singleton()->push_callp(get_instance_id(), StringName("grab_focus"), {}, 0, true);
+}
+
+void Control::grab_focus_no_signal() {
+	ERR_MAIN_THREAD_GUARD;
+	ERR_FAIL_COND(!is_inside_tree());
+
+	if (data.focus_mode == FOCUS_NONE) {
+		WARN_PRINT("This control can't grab focus. Use set_focus_mode() to allow a control to get focus.");
+		return;
+	}
+
+	get_viewport()->_gui_control_grab_focus_no_signal(this);
+}
+
+void Control::grab_focus_no_signal_deferred() {
+	MessageQueue::get_singleton()->push_callp(get_instance_id(), StringName("grab_focus_no_signal"), {}, 0, true);
+}
+
 void Control::grab_click_focus() {
 	ERR_MAIN_THREAD_GUARD;
 	ERR_FAIL_COND(!is_inside_tree());
@@ -4047,6 +4067,9 @@ void Control::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_focus_behavior_recursive"), &Control::get_focus_behavior_recursive);
 	ClassDB::bind_method(D_METHOD("has_focus", "ignore_hidden_focus"), &Control::has_focus, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("grab_focus", "hide_focus"), &Control::grab_focus, DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("grab_focus_deferred"), &Control::grab_focus_deferred);
+	ClassDB::bind_method(D_METHOD("grab_focus_no_signal"), &Control::grab_focus_no_signal);
+	ClassDB::bind_method(D_METHOD("grab_focus_no_signal_deferred"), &Control::grab_focus_no_signal_deferred);
 	ClassDB::bind_method(D_METHOD("release_focus"), &Control::release_focus);
 	ClassDB::bind_method(D_METHOD("find_prev_valid_focus"), &Control::find_prev_valid_focus);
 	ClassDB::bind_method(D_METHOD("find_next_valid_focus"), &Control::find_next_valid_focus);

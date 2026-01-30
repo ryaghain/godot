@@ -2195,6 +2195,12 @@ static void _register_variant_builtin_methods_math() {
 
 	bind_static_method(Vector2, from_angle, sarray("angle"), varray());
 
+	bind_static_method(Vector3, set_all, sarray("value"), varray());
+    bind_method(Vector3, set_x, sarray("x"), varray());
+	bind_method(Vector3, set_y, sarray("y"), varray());
+	bind_method(Vector3, set_z, sarray("z"), varray());
+    bind_method(Vector3, to_xz, sarray(), varray());
+
 	/* Vector2i */
 
 	bind_method(Vector2i, aspect, sarray(), varray());

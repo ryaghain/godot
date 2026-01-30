@@ -605,6 +605,9 @@ public:
 	FocusBehaviorRecursive get_focus_behavior_recursive() const;
 	bool has_focus(bool p_ignore_hidden_focus = false) const;
 	void grab_focus(bool p_hide_focus = false);
+	void grab_focus_deferred();
+	void grab_focus_no_signal();
+	void grab_focus_no_signal_deferred();
 	void grab_click_focus();
 	void release_focus();
 

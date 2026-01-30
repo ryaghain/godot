@@ -408,6 +408,39 @@
 				Returns a new vector with each component snapped to the nearest multiple of [param step]. This can also be used to round the components to an arbitrary number of decimals.
 			</description>
 		</method>
+		<method name="set_all" qualifiers="static">
+			<return type="Vector3" />
+			<param index="0" name="value" type="float" />
+			<description>
+				Returns a new vector with all components set to [param value].
+			</description>
+		</method>
+		<method name="set_x" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="x" type="float" />
+			<description>
+				Returns a new vector with the X component set to [param x], and the Y and Z components unchanged.
+			</description>
+		</method>
+		<method name="set_y" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="y" type="float" />
+			<description>
+				Returns a new vector with the Y component set to [param y], and the X and Z components unchanged.
+			</description>
+		</method>
+		<method name="set_z" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="z" type="float" />
+			<description>
+				Returns a new vector with the Z component set to [param z], and the X and Y components unchanged.
+			</description>
+		</method>
+		<method name="to_xz" qualifiers="const">
+			<return type="Vector2" />
+			<description>
+				Returns a new [Vector2] with the [member x] and [member z] components of this vector.
+		</method>
 	</methods>
 	<members>
 		<member name="x" type="float" setter="" getter="" default="0.0">

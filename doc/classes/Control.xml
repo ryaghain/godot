@@ -635,6 +635,24 @@
 				[b]Note:[/b] Using this method together with [method Callable.call_deferred] makes it more reliable, especially when called inside [method Node._ready].
 			</description>
 		</method>
+		<method name="grab_focus_deferred">
+			<return type="void" />
+			<description>
+				Shorthand for [code]Control.call_deferred("grab_focus")[/code].
+			</description>
+		</method>
+		<method name="grab_focus_no_signal">
+			<return type="void" />
+			<description>
+				Behaves exactly the same as [method grab_focus], except it does not emit the [member Viewport.gui_focus_changed] signal when focus is acquired.
+			</description>
+		</method>
+		<method name="grab_focus_deferred_no_signal">
+			<return type="void" />
+			<description>
+				Shorthand for [code]Control.call_deferred("grab_focus_no_signal")[/code].
+			</description>
+		</method>
 		<method name="has_focus" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="ignore_hidden_focus" type="bool" default="false" />

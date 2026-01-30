@@ -145,6 +145,14 @@ public:
 
 	void set_disable_shortcuts(bool p_disabled);
 
+	bool item_selected_passes_id = true;
+
+	void set_id_text(int p_id, const String &p_text);
+	
+	void set_item_selected_argument_type(bool p_is_id);
+	
+	bool get_item_selected_argument_type() const;
+
 #ifdef TOOLS_ENABLED
 	PackedStringArray get_configuration_warnings() const override;
 #endif

@@ -2748,6 +2748,19 @@ void Viewport::_drop_mouse_focus() {
 	}
 }
 
+void Viewport::_gui_control_grab_focus_no_signal(Control *p_control) {
+	if (gui.key_focus && gui.key_focus == p_control) {
+		// No need for change.
+		return;
+	}
+	get_tree()->call_group("_viewports", "_gui_remove_focus_for_window", get_base_window());
+	if (p_control->is_inside_tree() && p_control->get_viewport() == this) {
+		gui.key_focus = p_control;
+		//p_control->notification(Control::NOTIFICATION_FOCUS_ENTER);
+		p_control->queue_redraw();
+	}
+}
+
 void Viewport::_drop_physics_mouseover(bool p_paused_only) {
 #ifndef PHYSICS_2D_DISABLED
 	_cleanup_mouseover_colliders(true, p_paused_only);

@@ -154,6 +154,26 @@ bool Vector3::is_finite() const {
 	return Math::is_finite(x) && Math::is_finite(y) && Math::is_finite(z);
 }
 
+Vector3 Vector3::set_all(const real_t p_value) {
+	return Vector3(p_value, p_value, p_value);
+}
+
+Vector3 Vector3::set_x(const real_t p_x) const {
+	return Vector3(p_x, y, z);
+}
+
+Vector3 Vector3::set_y(const real_t p_y) const {
+	return Vector3(x, p_y, z);
+}
+
+Vector3 Vector3::set_z(const real_t p_z) const {
+	return Vector3(x, y, p_z);
+}
+
+Vector2 Vector3::to_xz() const {
+	return Vector2(x, z);
+}
+
 Vector3::operator String() const {
 	return "(" + String::num_real(x, true) + ", " + String::num_real(y, true) + ", " + String::num_real(z, true) + ")";
 }
