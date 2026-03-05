@@ -272,6 +272,9 @@ private:
 	bool physics_object_picking = false;
 	bool physics_object_picking_sort = false;
 	bool physics_object_picking_first_only = false;
+
+	bool physics_object_picking_mouse_captured = false;
+
 	List<Ref<InputEvent>> physics_picking_events;
 	ObjectID physics_object_capture;
 	ObjectID physics_object_over;
@@ -636,6 +639,8 @@ public:
 	bool get_physics_object_picking_sort();
 	void set_physics_object_picking_first_only(bool p_enable);
 	bool get_physics_object_picking_first_only();
+	void set_physics_object_picking_mouse_captured(bool p_enable);
+	bool get_physics_object_picking_mouse_captured();
 #endif // !defined(PHYSICS_2D_DISABLED) || !defined(PHYSICS_3D_DISABLED)
 
 	Variant gui_get_drag_data() const;

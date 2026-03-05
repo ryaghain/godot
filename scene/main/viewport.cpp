@@ -754,7 +754,7 @@ void Viewport::_process_picking() {
 	if (!physics_object_picking) {
 		return;
 	}
-	if (Object::cast_to<Window>(this) && Input::get_singleton()->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED) {
+	if (Object::cast_to<Window>(this) && Input::get_singleton()->get_mouse_mode() == Input::MOUSE_MODE_CAPTURED && !physics_object_picking_mouse_captured) {
 		return;
 	}
 	if (!gui.mouse_in_viewport || gui.subwindow_over) {
@@ -3647,6 +3647,15 @@ bool Viewport::get_physics_object_picking_sort() {
 	return physics_object_picking_sort;
 }
 
+void Viewport::set_physics_object_picking_mouse_captured(bool p_enable) {
+	ERR_MAIN_THREAD_GUARD;
+	physics_object_picking_mouse_captured = p_enable;
+}
+
+bool Viewport::get_physics_object_picking_mouse_captured() {
+	return physics_object_picking_mouse_captured;
+}
+
 void Viewport::set_physics_object_picking_first_only(bool p_enable) {
 	physics_object_picking_first_only = p_enable;
 }
@@ -5025,6 +5034,8 @@ void Viewport::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_physics_object_picking_sort"), &Viewport::get_physics_object_picking_sort);
 	ClassDB::bind_method(D_METHOD("set_physics_object_picking_first_only", "enable"), &Viewport::set_physics_object_picking_first_only);
 	ClassDB::bind_method(D_METHOD("get_physics_object_picking_first_only"), &Viewport::get_physics_object_picking_first_only);
+	ClassDB::bind_method(D_METHOD("set_physics_object_picking_mouse_captured", "enable"), &Viewport::set_physics_object_picking_mouse_captured);
+	ClassDB::bind_method(D_METHOD("get_physics_object_picking_mouse_captured"), &Viewport::get_physics_object_picking_mouse_captured);
 #endif // !defined(PHYSICS_2D_DISABLED) || !defined(PHYSICS_3D_DISABLED)
 
 	ClassDB::bind_method(D_METHOD("get_viewport_rid"), &Viewport::get_viewport_rid);
@@ -5210,6 +5221,7 @@ void Viewport::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_object_picking"), "set_physics_object_picking", "get_physics_object_picking");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_object_picking_sort"), "set_physics_object_picking_sort", "get_physics_object_picking_sort");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_object_picking_first_only"), "set_physics_object_picking_first_only", "get_physics_object_picking_first_only");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "physics_object_picking_mouse_captured"), "set_physics_object_picking_mouse_captured", "get_physics_object_picking_mouse_captured");
 #endif // !defined(PHYSICS_2D_DISABLED) || !defined(PHYSICS_3D_DISABLED)
 	ADD_GROUP("GUI", "gui_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "gui_disable_input"), "set_disable_input", "is_input_disabled");

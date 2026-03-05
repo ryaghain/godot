@@ -405,6 +405,9 @@
 			[b]Note:[/b] This setting is disabled by default because of its potential expensive computational cost.
 			[b]Note:[/b] Sorting happens after selecting the pickable objects. Because of the limitation of 64 simultaneously pickable objects, it is not guaranteed that the object with the highest [member CanvasItem.z_index] receives the picking event.
 		</member>
+		<member name="physics_object_picking_mouse_captured" type="bool" setter="set_physics_object_picking_mouse_captured" getter="get_physics_object_picking_mouse_captured" default="false">
+			If [code]true[/code], physics object picking will happen even when the mouse is captured (e.g. by [method Input.set_mouse_mode] with [constant Input.MOUSE_MODE_CAPTURED]).
+		</member>
 		<member name="positional_shadow_atlas_16_bits" type="bool" setter="set_positional_shadow_atlas_16_bits" getter="get_positional_shadow_atlas_16_bits" default="true">
 			Use 16 bits for the omni/spot shadow depth map. Enabling this results in shadows having less precision and may result in shadow acne, but can lead to performance improvements on some devices.
 		</member>
