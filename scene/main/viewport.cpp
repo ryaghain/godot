@@ -3589,7 +3589,7 @@ void Viewport::_push_unhandled_input_internal(const Ref<InputEvent> &p_event) {
 
 #if !defined(PHYSICS_2D_DISABLED) || !defined(PHYSICS_3D_DISABLED)
 	if (physics_object_picking && !is_input_handled()) {
-		if (Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED &&
+		if ((Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_CAPTURED || physics_object_picking_mouse_captured) &&
 				(Object::cast_to<InputEventMouse>(*p_event) ||
 						Object::cast_to<InputEventScreenDrag>(*p_event) ||
 						Object::cast_to<InputEventScreenTouch>(*p_event)
