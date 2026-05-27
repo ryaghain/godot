@@ -266,7 +266,7 @@
 		<signal name="item_selected">
 			<param index="0" name="value" type="int" />
 			<description>
-				Emitted when the current item has been changed by the user. The index of the item selected is passed as argument if [member item_selected_passes_id] is [code]false[/code], otherwise passes the id of the item selected.
+				Emitted when the current item has been changed by the user. The [i]index[/i] of the item selected is passed as an argument if [member item_selected_passes_id] is [code]false[/code], otherwise passes the [i]id[/i] of the item selected.
 				[member allow_reselect] must be enabled to reselect an item.
 			</description>
 		</signal>
