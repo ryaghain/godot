@@ -292,6 +292,8 @@ private:
 	bool propagate_shortcuts_to_parent = false;
 	bool shortcut_use_focus_owner = true;
 
+	bool physics_object_picking_mouse_captured = false;
+
 	Ref<World2D> world_2d;
 
 	StringName input_group;
@@ -656,6 +658,8 @@ public:
 	bool get_physics_object_picking_sort();
 	void set_physics_object_picking_first_only(bool p_enable);
 	bool get_physics_object_picking_first_only();
+	void set_physics_object_picking_mouse_captured(bool p_enable);
+	bool get_physics_object_picking_mouse_captured();
 #endif // !defined(PHYSICS_2D_DISABLED) || !defined(PHYSICS_3D_DISABLED)
 
 	Variant gui_get_drag_data() const;
