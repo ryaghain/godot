@@ -240,6 +240,9 @@
 		<member name="item_count" type="int" setter="set_item_count" getter="get_item_count" default="0">
 			The number of items to select from.
 		</member>
+		<member name="item_selected_passes_id" type="bool" setter="set_item_selected_argument_type" getter="get_item_selected_argument_type" default="true">
+			If [code]true[/code], the [signal item_selected] will pass the ID of the selected item as the argument instead of its index.
+		</member>
 		<member name="popup/item_{index}/disabled" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the item at [code]index[/code] is disabled.
 			[b]Note:[/b] [code]index[/code] is a value in the [code]0 .. item_count - 1[/code] range.
@@ -286,9 +289,9 @@
 			</description>
 		</signal>
 		<signal name="item_selected">
-			<param index="0" name="index" type="int" />
+			<param index="0" name="value" type="int" />
 			<description>
-				Emitted when the current item has been changed by the user. The index of the item selected is passed as argument.
+				Emitted when the current item has been changed by the user. The index of the item selected is passed as argument if [member item_selected_passes_id] is [code]false[/code], otherwise passes the id of the item selected.
 				[member allow_reselect] must be enabled to reselect an item.
 			</description>
 		</signal>

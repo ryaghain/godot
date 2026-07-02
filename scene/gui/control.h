@@ -726,6 +726,10 @@ public:
 	void grab_click_focus();
 	void release_focus();
 
+	void grab_focus_deferred();
+	void grab_focus_no_signal();
+	void grab_focus_no_signal_deferred();
+
 	Control *find_next_valid_focus() const;
 	Control *find_prev_valid_focus() const;
 	Control *find_valid_focus_neighbor(Side p_size) const;

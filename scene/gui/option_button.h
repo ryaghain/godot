@@ -47,6 +47,8 @@ class OptionButton : public Button {
 	bool initialized = false;
 	int queued_current = -1;
 
+	bool item_selected_passes_id = true;
+
 	struct ThemeCache {
 		Ref<StyleBox> normal;
 
@@ -107,6 +109,10 @@ public:
 	void set_item_disabled(int p_idx, bool p_disabled);
 	void set_item_tooltip(int p_idx, const String &p_tooltip);
 	void set_item_auto_translate_mode(int p_idx, AutoTranslateMode p_mode);
+
+	void set_id_text(int p_id, const String &p_text);
+	void set_item_selected_argument_type(bool p_is_id);
+	bool get_item_selected_argument_type() const;
 
 	String get_item_text(int p_idx) const;
 	Ref<Texture2D> get_item_icon(int p_idx) const;

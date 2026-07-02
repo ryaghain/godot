@@ -455,6 +455,8 @@ private:
 
 	List<Control *>::Element *_gui_add_root_control(Control *p_control);
 
+	void _gui_control_grab_focus_no_signal(Control *p_control);
+
 	void _gui_remove_root_control(List<Control *>::Element *RI);
 
 	String _gui_get_tooltip(Control *p_control, const Vector2 &p_pos, Control **r_tooltip_owner = nullptr);

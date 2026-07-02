@@ -2470,6 +2470,19 @@ void Viewport::_gui_cleanup_internal_state(Ref<InputEvent> p_event) {
 	}
 }
 
+void Viewport::_gui_control_grab_focus_no_signal(Control *p_control) {
+	if (gui.key_focus && gui.key_focus == p_control) {
+		// No need for change.
+		return;
+	}
+	get_tree()->call_group("_viewports", "_gui_remove_focus_for_window", get_base_window());
+	if (p_control->is_inside_tree() && p_control->get_viewport() == this) {
+		gui.key_focus = p_control;
+		//p_control->notification(Control::NOTIFICATION_FOCUS_ENTER);
+		p_control->queue_redraw();
+	}
+}
+
 List<Control *>::Element *Viewport::_gui_add_root_control(Control *p_control) {
 	gui.roots_order_dirty = true;
 	return gui.roots.push_back(p_control);

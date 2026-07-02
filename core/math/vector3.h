@@ -186,6 +186,12 @@ struct [[nodiscard]] Vector3 {
 	bool is_zero_approx() const;
 	bool is_finite() const;
 
+	static Vector3 set_all(const real_t p_value);
+	Vector3 set_x(const real_t p_x) const;
+	Vector3 set_y(const real_t p_y) const;
+	Vector3 set_z(const real_t p_z) const;
+	Vector2 to_xz() const;
+
 	/* Operators */
 
 	constexpr Vector3 &operator+=(const Vector3 &p_v);

@@ -1,0 +1,86 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Godot Scons: Windows Editor",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": "scons",
+            "args": [
+                "-j",
+                "24",
+                "platform=windows",
+                "arch=x86_64",
+                "precision=double"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Godot Scons: Windows Export Template Debug",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "type": "shell",
+            "command": "scons",
+            "args": [
+                "-j",
+                "24",
+                "platform=windows",
+                "target=template_debug",
+                "arch=x86_64",
+                "precision=double"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Godot Scons: Windows Export Template Release",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "type": "shell",
+            "command": "scons",
+            "args": [
+                "-j",
+                "24",
+                "platform=windows",
+                "target=template_release",
+                "arch=x86_64",
+                "precision=double"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Godot Scons: Windows Export Template All",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "dependsOn": [
+                "Godot Scons: Windows Export Template Debug",
+                "Godot Scons: Windows Export Template Release",
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Godot Scons: Windows Editor & Export Template",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "dependsOn": [
+                "Godot Scons: Windows Editor",
+                "Godot Scons: Windows Export Template Debug",
+                "Godot Scons: Windows Export Template Release",
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
+

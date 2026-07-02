@@ -212,7 +212,6 @@ cscope.po.out
 *.swp
 
 # Visual Studio Code
-.vscode/
 *.code-workspace
 .history/
 

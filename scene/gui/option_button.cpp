@@ -275,6 +275,24 @@ void OptionButton::set_item_disabled(int p_idx, bool p_disabled) {
 	popup->set_item_disabled(p_idx, p_disabled);
 }
 
+void OptionButton::set_id_text(int p_id, const String &p_text) {
+	int index = get_item_index(p_id);
+	popup->set_item_text(index, p_text);
+
+	if (current == index) {
+		set_text(p_text);
+	}
+	_queue_update_size_cache();
+}
+
+void OptionButton::set_item_selected_argument_type(bool p_is_id) {
+	item_selected_passes_id = p_is_id;
+}
+
+bool OptionButton::get_item_selected_argument_type() const {
+	return item_selected_passes_id;
+}
+
 String OptionButton::get_item_text(int p_idx) const {
 	return popup->get_item_text(p_idx);
 }
@@ -451,7 +469,7 @@ void OptionButton::_select(int p_which, bool p_emit) {
 
 		current = NONE_SELECTED;
 		set_text("");
-		set_button_icon(Ref<Texture2D>());
+		set_button_icon(nullptr);
 	} else {
 		ERR_FAIL_INDEX(p_which, popup->get_item_count());
 
@@ -465,7 +483,7 @@ void OptionButton::_select(int p_which, bool p_emit) {
 	}
 
 	if (is_inside_tree() && p_emit) {
-		emit_signal(SceneStringName(item_selected), current);
+		emit_signal(SceneStringName(item_selected), !item_selected_passes_id ? current : get_item_id(current));
 	}
 }
 
@@ -633,6 +651,10 @@ void OptionButton::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("remove_item", "idx"), &OptionButton::remove_item);
 	ClassDB::bind_method(D_METHOD("_select_int", "idx"), &OptionButton::_select_int);
 
+	ClassDB::bind_method(D_METHOD("set_id_text", "id", "text"), &OptionButton::set_id_text);
+	ClassDB::bind_method(D_METHOD("set_item_selected_argument_type", "id"), &OptionButton::set_item_selected_argument_type);
+	ClassDB::bind_method(D_METHOD("get_item_selected_argument_type"), &OptionButton::get_item_selected_argument_type);
+
 	ClassDB::bind_method(D_METHOD("get_popup"), &OptionButton::get_popup);
 	ClassDB::bind_method(D_METHOD("show_popup"), &OptionButton::show_popup);
 
@@ -658,7 +680,7 @@ void OptionButton::_bind_methods() {
 
 	ADD_ARRAY_COUNT("Items", "item_count", "set_item_count", "get_item_count", "popup/item_");
 
-	ADD_SIGNAL(MethodInfo("item_selected", PropertyInfo(Variant::INT, "index")));
+	ADD_SIGNAL(MethodInfo("item_selected", PropertyInfo(Variant::INT, "value")));
 	ADD_SIGNAL(MethodInfo("item_focused", PropertyInfo(Variant::INT, "index")));
 
 	BIND_THEME_ITEM(Theme::DATA_TYPE_STYLEBOX, OptionButton, normal);

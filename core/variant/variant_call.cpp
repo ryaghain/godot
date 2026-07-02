@@ -2301,6 +2301,12 @@ static void _register_variant_builtin_methods_math() {
 	bind_method(Vector3, maxf, sarray("with"), varray());
 	bind_static_method(Vector3, octahedron_decode, sarray("uv"), varray());
 
+	bind_static_method(Vector3, set_all, sarray("value"), varray());
+    bind_method(Vector3, set_x, sarray("x"), varray());
+	bind_method(Vector3, set_y, sarray("y"), varray());
+	bind_method(Vector3, set_z, sarray("z"), varray());
+    bind_method(Vector3, to_xz, sarray(), varray());
+
 	/* Vector3i */
 
 	bind_method(Vector3i, min_axis_index, sarray(), varray());

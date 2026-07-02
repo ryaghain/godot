@@ -3028,6 +3028,26 @@ void Control::release_focus() {
 	get_viewport()->gui_release_focus();
 }
 
+void Control::grab_focus_deferred() {
+	MessageQueue::get_singleton()->push_callp(get_instance_id(), StringName("grab_focus"), {}, 0, true);
+}
+
+void Control::grab_focus_no_signal() {
+	ERR_MAIN_THREAD_GUARD;
+	ERR_FAIL_COND(!is_inside_tree());
+
+	if (data.focus_mode == FOCUS_NONE) {
+		WARN_PRINT("This control can't grab focus. Use set_focus_mode() to allow a control to get focus.");
+		return;
+	}
+
+	get_viewport()->_gui_control_grab_focus_no_signal(this);
+}
+
+void Control::grab_focus_no_signal_deferred() {
+	MessageQueue::get_singleton()->push_callp(get_instance_id(), StringName("grab_focus_no_signal"), {}, 0, true);
+}
+
 static Control *_next_control(Control *p_from) {
 	if (p_from->is_set_as_top_level()) {
 		return nullptr; // Can't go above.
@@ -4733,6 +4753,10 @@ void Control::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("find_prev_valid_focus"), &Control::find_prev_valid_focus);
 	ClassDB::bind_method(D_METHOD("find_next_valid_focus"), &Control::find_next_valid_focus);
 	ClassDB::bind_method(D_METHOD("find_valid_focus_neighbor", "side"), &Control::find_valid_focus_neighbor);
+
+	ClassDB::bind_method(D_METHOD("grab_focus_deferred"), &Control::grab_focus_deferred);
+	ClassDB::bind_method(D_METHOD("grab_focus_no_signal"), &Control::grab_focus_no_signal);
+	ClassDB::bind_method(D_METHOD("grab_focus_no_signal_deferred"), &Control::grab_focus_no_signal_deferred);
 
 	ClassDB::bind_method(D_METHOD("set_h_size_flags", "flags"), &Control::set_h_size_flags);
 	ClassDB::bind_method(D_METHOD("get_h_size_flags"), &Control::get_h_size_flags);
