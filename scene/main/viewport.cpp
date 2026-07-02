@@ -3647,6 +3647,14 @@ bool Viewport::get_physics_object_picking_sort() {
 	return physics_object_picking_sort;
 }
 
+void Viewport::set_physics_object_picking_first_only(bool p_enable) {
+	physics_object_picking_first_only = p_enable;
+}
+
+bool Viewport::get_physics_object_picking_first_only() {
+	return physics_object_picking_first_only;
+}
+
 void Viewport::set_physics_object_picking_mouse_captured(bool p_enable) {
 	ERR_MAIN_THREAD_GUARD;
 	physics_object_picking_mouse_captured = p_enable;
@@ -3654,14 +3662,6 @@ void Viewport::set_physics_object_picking_mouse_captured(bool p_enable) {
 
 bool Viewport::get_physics_object_picking_mouse_captured() {
 	return physics_object_picking_mouse_captured;
-}
-
-void Viewport::set_physics_object_picking_first_only(bool p_enable) {
-	physics_object_picking_first_only = p_enable;
-}
-
-bool Viewport::get_physics_object_picking_first_only() {
-	return physics_object_picking_first_only;
 }
 #endif // !defined(PHYSICS_2D_DISABLED) || !defined(PHYSICS_3D_DISABLED)
 
