@@ -241,7 +241,7 @@
 			The number of items to select from.
 		</member>
 		<member name="item_selected_passes_id" type="bool" setter="set_item_selected_argument_type" getter="get_item_selected_argument_type" default="true">
-			If [code]true[/code], the [signal item_selected] will pass the ID of the selected item as the argument instead of its index.
+			If [code]true[/code], the [signal item_selected] will pass the id of the selected item as the argument instead of its index.
 		</member>
 		<member name="popup/item_{index}/disabled" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], the item at [code]index[/code] is disabled.
